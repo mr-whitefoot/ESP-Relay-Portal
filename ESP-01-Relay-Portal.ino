@@ -224,6 +224,7 @@ if (portal.uri() == form.config.c_str()) {
     add.TEXT("device_name", "Device name", data.device_name);
     add.BLOCK_END();
     add.SUBMIT("Save");    add.BREAK();
+    add.BUTTON("btnReboot","Reboot"); add.BREAK();
     add.BUTTON_LINK(form.config.c_str(), "Back");
     add.FORM_END();
 
@@ -314,7 +315,10 @@ void portalAction(){
     if (portal.click("switch")){
       Relay1.SetState( portal.getCheck("switch") );
       publishRelay();
-    }  
+    }
+    if (portal.click("btnReboot")){
+      ESP.restart();
+    }
   }
 }
 
