@@ -11,7 +11,6 @@ struct Data {
   // WiFi
   char ssid[32];
   char password[32];
-  char hostname[32];
 
   //MQTT
   char mqttServerIp[32];
@@ -79,8 +78,7 @@ void setup() {
   Serial.println("Booting...");
   Serial.println("Initialize EEPROM");
   EEPROM.begin(sizeof(data) + 1); // +3 на ключ
-  memory.begin(0, 'a');         // запускаем менеджер памяти
-
+  memory.begin(0, 'k');         // запускаем менеджер памяти
   
   // Connecting WiFi
   Serial.println(F("Initialize WiFi"));
@@ -94,27 +92,27 @@ void setup() {
     if (data.factoryReset == true || data.ssid == "" ) wifiAp();
     else wifiConnect();
 
-    //MQTT
-    client.setWifiCredentials(data.ssid, data.password);
-    client.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
-    client.setMqttClientName(data.hostname);
-      //Настройка максимальной длинны сообщения MQTT
-    client.setMaxPacketSize(1000);
+  //MQTT
+  client.setWifiCredentials(data.ssid, data.password);
+  client.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
+  client.setMqttClientName(data.device_name);
+  //Настройка максимальной длинны сообщения MQTT
+  client.setMaxPacketSize(1000);
 
-    //Таймеры
-    MessageTimer.setTime(data.status_delay*1000);
-    MessageTimer.start();
-    ServiceMessageTimer.setTime(data.avaible_delay*1000);
-    ServiceMessageTimer.start();
+  //Таймеры
+  MessageTimer.setTime(data.status_delay*1000);
+  MessageTimer.start();
+  ServiceMessageTimer.setTime(data.avaible_delay*1000);
+  ServiceMessageTimer.start();
 
-    // подключаем конструктор портала и запускаем
-    portal.attachBuild(portalBuild);
-    portal.disableAuth();
-    portal.attach(portalAction);
-    portal.start(data.device_name);
-    portal.enableOTA();
-    
-    Serial.println("Boot complete");
+  // подключаем конструктор портала и запускаем
+  portal.attachBuild(portalBuild);
+  portal.disableAuth();
+  portal.attach(portalAction);
+  portal.start(data.device_name);
+  portal.enableOTA();
+  
+  Serial.println("Boot complete");
   }
 
 }
@@ -269,8 +267,8 @@ if (portal.uri() == form.config.c_str()) {
     add.BLOCK_END();
 
     add.SUBMIT("Save and reboot"); add.BREAK();
-    add.BUTTON_LINK(form.mqttTopic.c_str(), "Back");
-    add.BUTTON_LINK(form.config.c_str(), "Back");
+    add.BUTTON_LINK(form.mqttTopic.c_str(), "MQTT Topic"); add.BREAK();
+    add.BUTTON_LINK(form.config.c_str(), "Back"); add.BREAK();
     add.FORM_END();
     
   // Страница конфигурации топиков mqtt
