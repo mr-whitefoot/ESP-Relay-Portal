@@ -27,6 +27,11 @@ struct Data {
   bool factoryReset = true;
   int wifiConnectTry = 0;
   bool wifiAP;
+
+  char discoveryTopic[100] = "homeassistant/switch/relay/config";
+  char commandTopic[100]   = "homeassistant/switch/relay/set";
+  char avaibleTopic[100]   = "homeassistant/switch/relay/avaible";
+  char stateTopic[100]     = "homeassistant/switch/relay/state";
 };
 
 Data data;
@@ -38,18 +43,13 @@ struct Form{
   String config = "/config";
   String general = "/config/general";
   String WiFiConfig ="/config/wifi_config";
-  String MqttConfig = "/config/mqtt_config";
+  String mqttConfig = "/config/mqtt_config";
+  String mqttTopic = "/config/mqtt_config/topic";
   String factoryReset = "/config/factory_reset";
   String firmwareUpgrade = "/ota_update";
 };
 
 Form form;
-
-String device_name;
-String discoveryTopic;
-String commandTopic;
-String avaibleTopic;
-String stateTopic;
 
 TimerMs MessageTimer;
 TimerMs ServiceMessageTimer;
@@ -69,8 +69,6 @@ void portalBuild();
 void portalAction();
 void portalCheck();
 void factoryReset();
-
-
 
 
 
@@ -95,12 +93,6 @@ void setup() {
   if (data.factoryReset==false){
     if (data.factoryReset == true || data.ssid == "" ) wifiAp();
     else wifiConnect();
-
-    device_name = data.device_name;
-    discoveryTopic = "homeassistant/switch/"+device_name+"/config";
-    commandTopic   = "homeassistant/switch/"+device_name+"/set";
-    avaibleTopic   = "homeassistant/switch/"+device_name+"/avaible";
-    stateTopic     = "homeassistant/switch/"+device_name+"/state";
 
     //MQTT
     client.setWifiCredentials(data.ssid, data.password);
@@ -139,7 +131,6 @@ void wifiAp(){
   data.wifiConnectTry = 0;
   memory.updateNow();
 
-  
   portal.attachBuild(portalBuild);
   portal.attach(portalAction);
   portal.start(data.device_name);    // запускаем портал
@@ -211,7 +202,7 @@ void portalBuild(){
 if (portal.uri() == form.config.c_str()) {
     add.BUTTON_LINK(form.general.c_str(), "General"); add.BREAK();
     add.BUTTON_LINK(form.WiFiConfig.c_str(), "WiFi configuration"); add.BREAK();
-    add.BUTTON_LINK(form.MqttConfig.c_str(), "MQTT configuration"); add.BREAK();
+    add.BUTTON_LINK(form.mqttConfig.c_str(), "MQTT configuration"); add.BREAK();
     add.BUTTON_LINK(form.factoryReset.c_str(), "Factory reset"); add.BREAK();
     add.BUTTON_LINK(form.firmwareUpgrade.c_str(), "Firmware upgrade"); add.BREAK();
     add.BUTTON_LINK("/", "Back");
@@ -224,9 +215,9 @@ if (portal.uri() == form.config.c_str()) {
     add.TEXT("device_name", "Device name", data.device_name);
     add.BLOCK_END();
     add.SUBMIT("Save");    add.BREAK();
-    add.BUTTON("btnReboot","Reboot"); add.BREAK();
+    add.FORM_END();    add.FORM_END();
     add.BUTTON_LINK(form.config.c_str(), "Back");
-    add.FORM_END();
+
 
     // страница конфигурации wifi 
   } else if (portal.uri() == form.WiFiConfig) {
@@ -254,8 +245,8 @@ if (portal.uri() == form.config.c_str()) {
 
 
     // страница конфигурации MQTT
-  } else if (portal.uri() == form.MqttConfig) {
-    add.FORM_BEGIN(form.MqttConfig.c_str());
+  } else if (portal.uri() == form.mqttConfig) {
+    add.FORM_BEGIN(form.mqttConfig.c_str());
     add.LABEL("MQTT Server");
 
     add.BLOCK_BEGIN();
@@ -278,8 +269,28 @@ if (portal.uri() == form.config.c_str()) {
     add.BLOCK_END();
 
     add.SUBMIT("Save and reboot"); add.BREAK();
+    add.BUTTON_LINK(form.mqttTopic.c_str(), "Back");
     add.BUTTON_LINK(form.config.c_str(), "Back");
     add.FORM_END();
+    
+  // Страница конфигурации топиков mqtt
+  } else if (portal.uri() == form.mqttTopic) {
+    add.FORM_BEGIN(form.mqttTopic.c_str());
+    add.TITLE("MQTT topics");
+    add.BLOCK_BEGIN();
+    add.LABEL("Discovery topic"); add.BREAK();
+    add.TEXT("discoveryTopic", "Discovery topic", data.discoveryTopic); add.BREAK();
+    add.LABEL("Command topic"); add.BREAK();
+    add.TEXT("commandTopic", "Command topic", data.commandTopic); add.BREAK();
+    add.LABEL("Avaible topic"); add.BREAK();
+    add.TEXT("avaibleTopic", "Avaible topic", data.avaibleTopic); add.BREAK();
+    add.LABEL("State topic"); add.BREAK();
+    add.TEXT("stateTopic", "State topic", data.stateTopic); add.BREAK();
+    add.BLOCK_END();
+
+    add.SUBMIT("Save and reboot"); add.BREAK();
+    add.BUTTON_LINK(form.mqttConfig.c_str(), "Back");
+    add.FORM_END();   
 
     //Сброс до заводских настроек
   } else if (portal.uri() == form.factoryReset) {
@@ -316,9 +327,6 @@ void portalAction(){
       Relay1.SetState( portal.getCheck("switch") );
       publishRelay();
     }
-    if (portal.click("btnReboot")){
-      ESP.restart();
-    }
   }
 }
 
@@ -342,10 +350,9 @@ void portalCheck(){
     } else if(portal.form(form.general)){
       portal.copyStr("label", data.label);
       portal.copyStr("device_name", data.device_name);   
-      device_name = data.device_name;  
       memory.updateNow();
       
-    } else if(portal.form(form.MqttConfig)){
+    } else if(portal.form(form.mqttConfig)){
       portal.copyStr("mqttServerIp", data.mqttServerIp);
       data.mqttServerPort = portal.getInt("mqttServerPort");
       portal.copyStr("mqttUsername", data.mqttUsername);
@@ -354,6 +361,15 @@ void portalCheck(){
       data.status_delay = portal.getInt("status_delay");
       memory.updateNow();
       ESP.restart();
+
+//Топики
+    } else if(portal.form(form.mqttTopic)){
+      portal.copyStr("discoveryTopic", data.discoveryTopic);
+      portal.copyStr("commandTopic", data.commandTopic);
+      portal.copyStr("avaibleTopic", data.avaibleTopic);
+      portal.copyStr("stateTopic", data.stateTopic);
+      memory.updateNow();
+      ESP.restart();    
     }
   }
 }
@@ -371,7 +387,7 @@ void onConnectionEstablished() {
   SendDiscoveryMessage();
   SendAvailableMessage();
 
-  client.subscribe(commandTopic, [] (const String &payload)  {
+  client.subscribe(data.commandTopic, [] (const String &payload)  {
     Serial.println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
     publishRelay();
@@ -386,7 +402,7 @@ void publishRelay() {
   char buffer[256];
   doc["switch"] = Relay1.GetState();
   serializeJson(doc, buffer);
-  client.publish(stateTopic, buffer, false);
+  client.publish(data.stateTopic, buffer, false);
 }
 
 void SendDiscoveryMessage( ){
@@ -394,16 +410,18 @@ void SendDiscoveryMessage( ){
   DynamicJsonDocument doc(2048);
   char buffer[1024];
 
+  String device_name = data.device_name;
+  
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
   doc["object_id"]    = "ESP_"+device_name;
-  doc["avty_t"]       = avaibleTopic;
+  doc["avty_t"]       = data.avaibleTopic;
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
-  doc["stat_t"]       = stateTopic;
+  doc["stat_t"]       = data.stateTopic;
   doc["stat_on"]      = true;
   doc["stat_off"]     = false;
-  doc["cmd_t"]        = commandTopic;
+  doc["cmd_t"]        = data.commandTopic;
   doc["pl_on"]        = true;
   doc["pl_off"]       = false;
   doc["dev_cla"]      = "switch";
@@ -417,12 +435,12 @@ void SendDiscoveryMessage( ){
   identifiers.add("ESP_" + device_name);
 
   serializeJson(doc, buffer);
-  client.publish(discoveryTopic.c_str(), buffer, true);
+  client.publish(data.discoveryTopic, buffer, true);
 }
 
 void SendAvailableMessage(){
   Serial.println("MQTT publish avaible message");
-  client.publish(avaibleTopic.c_str(), "online", false);
+  client.publish(data.avaibleTopic, "online", false);
 }
 
 void mqttPublish() {
