@@ -7,6 +7,9 @@
 #include <EEManager.h>
 #include "ESPRelay.h"
 
+
+String version = "1.0.3";
+
 struct Data {
   // WiFi
   char ssid[32];
@@ -79,6 +82,7 @@ void setup() {
   Serial.println("Initialize EEPROM");
   EEPROM.begin(sizeof(data) + 1); // +3 на ключ
   memory.begin(0, 'k');         // запускаем менеджер памяти
+
   
   // Connecting WiFi
   Serial.println(F("Initialize WiFi"));
@@ -121,6 +125,7 @@ void wifiAp(){
   // создаём точку с именем Relay
   Serial.println(F("Create AP"));
   String ssid("RelayAP");
+  WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid);
   IPAddress ip = WiFi.softAPIP();
   Serial.print("AP IP address: ");
@@ -131,7 +136,7 @@ void wifiAp(){
 
   portal.attachBuild(portalBuild);
   portal.attach(portalAction);
-  portal.start(data.device_name);    // запускаем портал
+  portal.start(WIFI_AP);
   while (portal.tick()) {   // портал работает
     
   }
@@ -212,6 +217,12 @@ if (portal.uri() == form.config.c_str()) {
     add.TEXT("label", "Label", data.label); add.BREAK();
     add.TEXT("device_name", "Device name", data.device_name);
     add.BLOCK_END();
+    
+    add.BLOCK_BEGIN();
+    add.LABEL_MINI("Version: "); add.LABEL_MINI(version); add.BREAK();
+    add.LABEL_MINI("MAC adress: "); add.LABEL_MINI(WiFi.macAddress()); add.BREAK();
+    add.BLOCK_END();
+    
     add.SUBMIT("Save");    add.BREAK();
     add.FORM_END();    add.FORM_END();
     add.BUTTON_LINK(form.config.c_str(), "Back");
@@ -224,8 +235,11 @@ if (portal.uri() == form.config.c_str()) {
 
     add.BLOCK_BEGIN();
     add.LABEL_MINI("WiFi status"); 
+     
     if (WiFi.status() == WL_CONNECTED){
       add.LED_GREEN("WiFiLed", true); add.BREAK();
+      int strength = map(WiFi.RSSI(), -80, -20, 0, 100);
+      add.LABEL_MINI("Signal: "); add.LABEL_MINI(strength); add.LABEL_MINI("%");add.BREAK();
       add.LABEL_MINI("IP address"); add.LABEL_MINI(WiFi.localIP().toString().c_str()); add.BREAK();}
     else add.LED_GREEN("WiFiLed", false);
     add.BLOCK_END();
@@ -295,7 +309,7 @@ if (portal.uri() == form.config.c_str()) {
     add.FORM_BEGIN(form.factoryReset.c_str());
     add.TITLE( "Factory reset" );
     add.LABEL_MINI("I'm really understand what I do"); 
-    add.CHECK("resetAllow", resetAllow);
+    add.CHECK("resetAllow", resetAllow);  add.BREAK(); add.BREAK();
     add.SUBMIT("Factory reset"); add.BREAK();
     add.BUTTON_LINK(form.config.c_str(), "Back");  add.BREAK();
     add.FORM_END();
