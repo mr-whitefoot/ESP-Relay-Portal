@@ -8,7 +8,7 @@
 #include "ESPRelay.h"
 
 
-String version = "1.0.4";
+String version = "1.0.5";
 
 struct Data {
   // WiFi
@@ -198,6 +198,9 @@ void loop(){
 
 void portalBuild(){
   String p;
+  long rssi = WiFi.RSSI();
+  int strength = map(rssi, -80, -20, 0, 100);
+  
   BUILD_BEGIN(p);
   add.THEME(GP_DARK);
 
@@ -238,8 +241,7 @@ if (portal.uri() == form.config.c_str()) {
      
     if (WiFi.status() == WL_CONNECTED){
       add.LED_GREEN("WiFiLed", true); add.BREAK();
-      int strength = map(WiFi.RSSI(), -80, -20, 0, 100);
-      add.LABEL_MINI("Signal:"); add.LABEL_MINI(strength+"%");add.BREAK();
+      add.LABEL_MINI("Signal:"); add.LABEL_MINI(strength); add.LABEL_MINI("%"); add.BREAK();
       add.LABEL_MINI("IP address: "+WiFi.localIP().toString()); add.BREAK();}
     else add.LED_GREEN("WiFiLed", false);
     add.BLOCK_END();
