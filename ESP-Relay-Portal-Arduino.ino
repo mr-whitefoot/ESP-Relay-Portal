@@ -8,7 +8,7 @@
 #include "ESPRelay.h"
 
 
-String version = "1.0.3";
+String version = "1.0.4";
 
 struct Data {
   // WiFi
@@ -219,8 +219,8 @@ if (portal.uri() == form.config.c_str()) {
     add.BLOCK_END();
     
     add.BLOCK_BEGIN();
-    add.LABEL_MINI("Version: "); add.LABEL_MINI(version); add.BREAK();
-    add.LABEL_MINI("MAC adress: "); add.LABEL_MINI(WiFi.macAddress()); add.BREAK();
+    add.LABEL_MINI("Version: "+version); add.BREAK();
+    add.LABEL_MINI("MAC adress: "+WiFi.macAddress()); add.BREAK();
     add.BLOCK_END();
     
     add.SUBMIT("Save");    add.BREAK();
@@ -239,8 +239,8 @@ if (portal.uri() == form.config.c_str()) {
     if (WiFi.status() == WL_CONNECTED){
       add.LED_GREEN("WiFiLed", true); add.BREAK();
       int strength = map(WiFi.RSSI(), -80, -20, 0, 100);
-      add.LABEL_MINI("Signal: "); add.LABEL_MINI(strength); add.LABEL_MINI("%");add.BREAK();
-      add.LABEL_MINI("IP address"); add.LABEL_MINI(WiFi.localIP().toString().c_str()); add.BREAK();}
+      add.LABEL_MINI("Signal:"); add.LABEL_MINI(strength+"%");add.BREAK();
+      add.LABEL_MINI("IP address: "+WiFi.localIP().toString()); add.BREAK();}
     else add.LED_GREEN("WiFiLed", false);
     add.BLOCK_END();
 
