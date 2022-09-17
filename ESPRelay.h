@@ -3,25 +3,37 @@
 class ESPRelay
 {
 public:
-    ESPRelay(int Pin){
+    ESPRelay(int Pin = 0, bool InvertMode = false ){
         this->Pin = Pin;
         pinMode(Pin, OUTPUT);
+        this->InvertMode = InvertMode;
         SetState(false);
     }
 
+    void SetPin( int Pin ){
+      this->Pin = Pin;
+      pinMode(Pin, OUTPUT);
+      SetState(false);
+    }
+    
+    void SetInvertMode( bool InvertMode ){
+      this->InvertMode = InvertMode;
+      SetState(false);
+    }
 
     void SetState( bool RelayState ){
         if (RelayState){
-            digitalWrite(Pin, LOW );
-            this->RelayState = 1; }
+          if (InvertMode == true) digitalWrite(Pin, LOW );
+          else digitalWrite(Pin, HIGH );
+          this->RelayState = true; }
         else{
-            digitalWrite(Pin, HIGH ); 
-            this->RelayState = 0; }
+          if (InvertMode == true) digitalWrite(Pin, HIGH );
+          else digitalWrite(Pin, LOW ); 
+          this->RelayState = false; }
     }
 
 
-    bool GetState(){
-        return RelayState; }
+    bool GetState(){ return RelayState; }
 
 
    void ResetState( ){
@@ -33,6 +45,7 @@ public:
 
 private:
     int Pin;
+    bool InvertMode;
     bool RelayState;
 
 
