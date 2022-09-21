@@ -216,7 +216,7 @@ void portalCheck(){
       portal.copyStr("avaibleTopic", data.avaibleTopic);
       portal.copyStr("stateTopic", data.stateTopic);
       memory.updateNow();
-      ESP.restart();    
+      ESP.restart();
     }
   }
 }

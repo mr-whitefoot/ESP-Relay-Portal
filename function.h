@@ -48,9 +48,11 @@ void startup(){
 
 
 void wifiAp(){
-  // создаём точку с именем Relay
+  // создаём точку доступа
   Serial.println(F("Create AP"));
-  String ssid("RelayAP");
+  
+  String ssid = data.device_name;
+  ssid += "AP";
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid);
   IPAddress ip = WiFi.softAPIP();
@@ -63,8 +65,10 @@ void wifiAp(){
   portal.attachBuild(portalBuild);
   portal.attach(portalAction);
   portal.start(WIFI_AP);
+  WiFiApTimer.setTime(WIFIAPTIMER);
+  WiFiApTimer.start();
   while (portal.tick()) {   // портал работает
-    
+    if(WiFiApTimer.active() && WiFiApTimer.tick()) ESP.restart;    
   }
 }
 
@@ -104,3 +108,4 @@ void factoryReset(){
   memory.updateNow();
   ESP.restart();
 }
+

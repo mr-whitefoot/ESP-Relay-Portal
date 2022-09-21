@@ -8,7 +8,7 @@
 #include "ESPRelay.h"
 
 
-String version = "1.1.11";
+String version = "1.1.12";
 
 struct Data {
   //Data
@@ -39,6 +39,7 @@ struct Data {
   char stateTopic[100]     = "homeassistant/switch/relay/state";
 };
 
+#define WIFIAPTIMER 120000
 Data data;
 GyverPortal portal;
 EEManager memory(data);
@@ -58,6 +59,7 @@ Form form;
 
 TimerMs MessageTimer;
 TimerMs ServiceMessageTimer;
+TimerMs WiFiApTimer;
 EspMQTTClient client;
 ESPRelay Relay1;
 bool resetAllow;
