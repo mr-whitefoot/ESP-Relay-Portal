@@ -1,0 +1,5 @@
+
+.DS_Store
+build/esp8266.esp8266.generic/ESP-Relay-Portal-Arduino.ino.bin
+build/esp8266.esp8266.generic/ESP-Relay-Portal-Arduino.ino.elf
+build/esp8266.esp8266.generic/ESP-Relay-Portal-Arduino.ino.map
