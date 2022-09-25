@@ -3,6 +3,7 @@ void portalBuild(){
   String p;
   long rssi = WiFi.RSSI();
   int strength = map(rssi, -80, -20, 0, 100);
+  uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
   
   BUILD_BEGIN(p);
   add.THEME(GP_DARK);
@@ -132,8 +133,7 @@ if (portal.uri() == form.config.c_str()) {
       add.LED_GREEN("WiFiLed", true); add.BREAK();
       add.LABEL_MINI("Signal:"); add.LABEL_MINI(strength); add.LABEL_MINI("%"); add.BREAK();
       add.LABEL_MINI("IP address: "+WiFi.localIP().toString()); add.BREAK();}
-    else add.LED_GREEN("WiFiLed", false);
-    add.LABEL_MINI("MAC adress: "+WiFi.macAddress()); add.BREAK();
+    else { add.LED_GREEN("WiFiLed", false);add.BREAK(); }
     add.BLOCK_END();
     
     add.BLOCK_BEGIN();
@@ -143,7 +143,11 @@ if (portal.uri() == form.config.c_str()) {
     add.BLOCK_END();
 
     add.BLOCK_BEGIN();
-    add.LABEL_MINI("Version: "+version); add.BREAK();
+    add.LABEL_MINI("Relay version: "+version); add.BREAK();
+    if (WiFiApTimer.active()){
+      add.LABEL_MINI("Restart in:");
+      add.LABEL_MINI(timeleftAP);add.BREAK();
+    }
     add.BLOCK_END();
     
     add.BUTTON_LINK(form.config.c_str(), "Configuration"); add.BREAK();
@@ -180,6 +184,7 @@ void portalCheck(){
   Serial.println(portal.form());
   if (portal.form()) {
     Serial.println("Portal form handle");
+    //WiFi config
     if (portal.form(form.WiFiConfig)) {
       portal.copyStr("ssid", data.ssid);
       portal.copyStr("pass", data.password);
@@ -187,10 +192,14 @@ void portalCheck(){
       data.wifiAP = false;
       memory.updateNow();
       ESP.restart();
+    
+    // Factory reset
     } else if(portal.form(form.factoryReset)){
       Serial.println("Factory reset"); 
       if(portal.getCheck("resetAllow"));
         factoryReset();
+    
+    // Preferences
     } else if(portal.form(form.preferences)){
       portal.copyStr("label", data.label);
       portal.copyStr("device_name", data.device_name);
@@ -199,6 +208,7 @@ void portalCheck(){
       publishRelay();
       memory.updateNow();
       
+      //MQTT Config
     } else if(portal.form(form.mqttConfig)){
       portal.copyStr("mqttServerIp", data.mqttServerIp);
       data.mqttServerPort = portal.getInt("mqttServerPort");
@@ -209,7 +219,7 @@ void portalCheck(){
       memory.updateNow();
       ESP.restart();
 
-//Топики
+    //Топики
     } else if(portal.form(form.mqttTopic)){
       portal.copyStr("discoveryTopic", data.discoveryTopic);
       portal.copyStr("commandTopic", data.commandTopic);

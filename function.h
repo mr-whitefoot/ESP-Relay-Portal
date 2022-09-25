@@ -46,7 +46,7 @@ void startup(){
   }
 }
 
-
+void restart();
 void wifiAp(){
   // создаём точку доступа
   Serial.println(F("Create AP"));
@@ -66,14 +66,15 @@ void wifiAp(){
   portal.attach(portalAction);
   portal.start(WIFI_AP);
   WiFiApTimer.setTime(WIFIAPTIMER);
+  WiFiApTimer.setTimerMode();
+  WiFiApTimer.attach(restart);
   WiFiApTimer.start();
   while (portal.tick()) {   // портал работает
-    if(WiFiApTimer.active() && WiFiApTimer.tick()) ESP.restart;    
-  }
+    WiFiApTimer.tick(); };
 }
 
-void wifiConnect()
-{
+
+void wifiConnect(){
   WiFi.hostname(data.device_name);
   WiFi.begin(data.ssid, data.password);
   uint32_t notConnectedCounter = 0;
@@ -106,6 +107,11 @@ void factoryReset(){
   memory.reset();
   data.factoryReset = true;
   memory.updateNow();
-  ESP.restart();
+  restart();
+}
+
+void restart(){
+  Serial.println("ESP restart"); 
+  ESP.restart();  
 }
 
