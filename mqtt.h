@@ -22,7 +22,6 @@ void onConnectionEstablished() {
   client.subscribe(data.commandTopic, [] (const String &payload)  {
     Serial.println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
-    publishRelay();
   });
 }
 

@@ -8,7 +8,7 @@
 #include "ESPRelay.h"
 
 
-String version = "1.3.0";
+String version = "1.5.0";
 
 struct Data {
   //Data
@@ -18,6 +18,8 @@ struct Data {
   bool factoryReset = true;
   int wifiConnectTry = 0;
   bool wifiAP;
+  bool relaySaveStatus = false;
+  bool state;
   
   // WiFi
   char ssid[32];
@@ -75,6 +77,7 @@ void portalBuild();
 void portalAction();
 void portalCheck();
 void factoryReset();
+void ChangeRelayState();
 
 #include "webface.h"
 #include "mqtt.h"

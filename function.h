@@ -9,12 +9,14 @@ void startup(){
   //Relay
   Relay1.SetPin(0);
   Relay1.SetInvertMode(data.relayInvertMode);
-  
+  Relay1.ChangeStateCallback(ChangeRelayState);
+  if(data.relaySaveStatus){ Relay1.SetState(data.state); };
+
   // Connecting WiFi
   Serial.println(F("Initialize WiFi"));
 
   if (data.factoryReset == true || data.wifiAP == true ) wifiAp();
-  
+
   // Enable OTA update
   ArduinoOTA.begin();
 
@@ -41,7 +43,7 @@ void startup(){
   portal.attach(portalAction);
   portal.start(data.device_name);
   portal.enableOTA();
-  
+
   Serial.println("Boot complete");
   }
 }
@@ -50,7 +52,7 @@ void restart();
 void wifiAp(){
   // создаём точку доступа
   Serial.println(F("Create AP"));
-  
+
   String ssid = data.device_name;
   ssid += "AP";
   WiFi.mode(WIFI_AP);
@@ -86,13 +88,13 @@ void wifiConnect(){
     if (notConnectedCounter > 150)
     { // Reset board if not connected after 5s
       Serial.println("Resetting due to Wifi not connecting...");
-      
+
       data.wifiConnectTry += 1;
       if(data.wifiConnectTry == 100);
         data.wifiAP = true;
       memory.updateNow();
-      
-      ESP.restart();
+
+      restart();
     }
   }
 
@@ -103,7 +105,7 @@ void wifiConnect(){
 }
 
 void factoryReset(){
-  Serial.println("Factory reset"); 
+  Serial.println("Factory reset");
   memory.reset();
   data.factoryReset = true;
   memory.updateNow();
@@ -111,7 +113,14 @@ void factoryReset(){
 }
 
 void restart(){
-  Serial.println("ESP restart"); 
-  ESP.restart();  
+  Serial.println("ESP restart");
+  ESP.restart();
 }
 
+void ChangeRelayState(){
+  if(data.relaySaveStatus){
+    data.state = Relay1.GetState();
+    memory.updateNow();
+  }
+  publishRelay();
+}

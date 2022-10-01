@@ -8,8 +8,13 @@ public:
         pinMode(Pin, OUTPUT);
         this->InvertMode = InvertMode;
         SetState(false);
+
     }
 
+
+    void ChangeStateCallback( void (*handler)()) {
+        CallbackHandler = *handler;
+    }
     void SetPin( int Pin ){
       this->Pin = Pin;
       pinMode(Pin, OUTPUT);
@@ -22,14 +27,16 @@ public:
     }
 
     void SetState( bool RelayState ){
-        if (RelayState){
-          if (InvertMode == true) digitalWrite(Pin, LOW );
-          else digitalWrite(Pin, HIGH );
-          this->RelayState = true; }
-        else{
-          if (InvertMode == true) digitalWrite(Pin, HIGH );
-          else digitalWrite(Pin, LOW ); 
-          this->RelayState = false; }
+      if (RelayState){
+        if (InvertMode == true) digitalWrite(Pin, LOW );
+        else digitalWrite(Pin, HIGH );
+        this->RelayState = true; }
+      else{
+        if (InvertMode == true) digitalWrite(Pin, HIGH );
+        else digitalWrite(Pin, LOW ); 
+        this->RelayState = false; }
+
+      if (*CallbackHandler) CallbackHandler();
     }
 
 
@@ -47,6 +54,5 @@ private:
     int Pin;
     bool InvertMode;
     bool RelayState;
-
-
+    void (*CallbackHandler)() = nullptr;
 };
