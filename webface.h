@@ -7,7 +7,7 @@ void portalBuild(){
   GP.THEME(GP_DARK);
 
   // список имён компонентов на обновление
-  GP.UPDATE("signal,switch,mqttStatusLed,ipAddress");
+  GP.UPDATE("signal,switch,mqttStatusLed,ipAddress,wifiAPTimer");
 
 
   // Страница конфигурации
@@ -179,7 +179,7 @@ void portalBuild(){
         GP.LABEL("Relay version: "+version); GP.BREAK();
         if (WiFiApTimer.active()){
           GP.LABEL("Restart in:");
-          GP.LABEL(String(timeleftAP)); GP.BREAK();
+          GP.LABEL(String(timeleftAP),"wifiAPTimer"); GP.BREAK();
         };
       GP.BLOCK_END();
       
@@ -273,6 +273,9 @@ void portalCheck(){
       portal.updateInt("switch", Relay1.GetState());
       portal.updateInt("mqttStatusLed",client.isConnected());
       String ipAdress = WiFi.localIP().toString();
-      portal.updateString("ipAddress", ipAdress);     
+      portal.updateString("ipAddress", ipAdress);    
+
+      uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
+      portal.updateInt("wifiAPTimer", timeleftAP);
   }
 }
