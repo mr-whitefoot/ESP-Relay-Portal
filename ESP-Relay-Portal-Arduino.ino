@@ -8,7 +8,7 @@
 #include "ESPRelay.h"
 
 
-String version = "1.5.0";
+String version = "1.6.0";
 
 struct Data {
   //Data

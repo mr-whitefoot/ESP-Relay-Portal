@@ -1,11 +1,14 @@
-
 void portalBuild(){
-  long rssi = WiFi.RSSI();
-  int strength = map(rssi, -80, -20, 0, 100);
+ // long rssi = WiFi.RSSI();
+ // int strength = map(rssi, -80, -20, 0, 100);
   uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
   
   GP.BUILD_BEGIN();
   GP.THEME(GP_DARK);
+
+  // список имён компонентов на обновление
+  GP.UPDATE("signal,switch,mqttStatusLed,ipAddress");
+
 
   // Страница конфигурации
   if (portal.uri() == form.config.c_str()) {
@@ -56,10 +59,10 @@ void portalBuild(){
               GP.LABEL("WiFi status"); GP.LED_GREEN("WiFiLed", true);
             GP.BOX_END();
             GP.BOX_BEGIN(GP_EDGES);
-              GP.LABEL("Signal"); GP.LABEL(String(strength)+"%");
+              GP.LABEL("Signal"); GP.LABEL("","signal");
             GP.BOX_END();
             GP.BOX_BEGIN(GP_EDGES);
-              GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString());
+              GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString(),"ipAddress");
             GP.BOX_END();}
           else {  
             GP.BOX_BEGIN(GP_EDGES);
@@ -85,9 +88,7 @@ void portalBuild(){
 
       GP.BLOCK_TAB_BEGIN("Information");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status"); 
-          if (client.isConnected()){ GP.LED_GREEN("MQTT", true);}
-          else{ GP.LED_GREEN("MQTT", false);}
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());          
         GP.BOX_END();
       GP.BLOCK_END();
 
@@ -156,10 +157,10 @@ void portalBuild(){
             GP.LABEL("Status");GP.LED_GREEN("WiFiLed", true);
           GP.BOX_END();
           GP.BOX_BEGIN(GP_EDGES);
-            GP.LABEL("Signal"); GP.LABEL(String(strength)+"%");
+            GP.LABEL("Signal"); GP.LABEL("","signal");
           GP.BOX_END();
           GP.BOX_BEGIN(GP_EDGES);
-            GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString());
+            GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString(),"ipAddress");
           GP.BOX_END(); 
         }else{
           GP.BOX_BEGIN(GP_EDGES);
@@ -170,9 +171,7 @@ void portalBuild(){
       
       GP.BLOCK_TAB_BEGIN("MQTT");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status");
-          if (client.isConnected()){ GP.LED_GREEN("MQTT", true); }
-          else{ GP.LED_GREEN("MQTT", false); }
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());          
         GP.BOX_END(); 
       GP.BLOCK_END();
 
@@ -210,7 +209,6 @@ void portalAction(){
       data.relaySaveStatus = portal.getCheck("relaySaveStatus");
       memory.updateNow();
     }
-    
   }
 }
 
@@ -264,5 +262,17 @@ void portalCheck(){
       memory.updateNow();
       ESP.restart();
     }
+  }
+
+  if (portal.update()){
+      long rssi = WiFi.RSSI();
+      int strength = map(rssi, -80, -20, 0, 100);
+      String wifiStrength = String(strength)+"%";
+      portal.updateString("signal", wifiStrength);
+
+      portal.updateInt("switch", Relay1.GetState());
+      portal.updateInt("mqttStatusLed",client.isConnected());
+      String ipAdress = WiFi.localIP().toString();
+      portal.updateString("ipAddress", ipAdress);     
   }
 }
