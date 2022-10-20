@@ -15,19 +15,19 @@ bool ToBool( String value){
 }
 
 void onConnectionEstablished() {
-  Serial.println("MQTT server is connected");
+  println("MQTT server is connected");
   SendDiscoveryMessage();
   SendAvailableMessage();
 
   client.subscribe(data.commandTopic, [] (const String &payload)  {
-    Serial.println("MQTT received command topic"); 
+    println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
   });
 }
 
 
 void publishRelay() {
-  Serial.println("MQTT publish status");
+  println("MQTT publish status");
 
   DynamicJsonDocument doc(1024);
   char buffer[256];
@@ -38,7 +38,7 @@ void publishRelay() {
 }
 
 void SendDiscoveryMessage( ){
-  Serial.println("MQTT publish discovery message");
+  println("MQTT publish discovery message");
   DynamicJsonDocument doc(2048);
   char buffer[1024];
 
@@ -71,7 +71,7 @@ void SendDiscoveryMessage( ){
 }
 
 void SendAvailableMessage(){
-  Serial.println("MQTT publish avaible message");
+  println("MQTT publish avaible message");
   client.publish(data.avaibleTopic, "online", false);
 }
 

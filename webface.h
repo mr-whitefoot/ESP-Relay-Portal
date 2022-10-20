@@ -1,6 +1,4 @@
 void portalBuild(){
- // long rssi = WiFi.RSSI();
- // int strength = map(rssi, -80, -20, 0, 100);
   uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
   
   GP.BUILD_BEGIN();
@@ -12,13 +10,22 @@ void portalBuild(){
 
   // Страница конфигурации
   if (portal.uri() == form.config.c_str()) {
-    GP.BUTTON_LINK(form.preferences.c_str(), "Preferences"); GP.BREAK();
-    GP.BUTTON_LINK(form.WiFiConfig.c_str(), "WiFi configuration"); GP.BREAK();
-    GP.BUTTON_LINK(form.mqttConfig.c_str(), "MQTT configuration"); GP.BREAK();
-    GP.BUTTON_LINK(form.factoryReset.c_str(), "Factory reset"); GP.BREAK();
-    GP.BUTTON_LINK(form.firmwareUpgrade.c_str(), "Firmware upgrade"); GP.BREAK();
-    GP.BUTTON_LINK("/", "Back");
+    GP.TITLE("Configuration");
+    GP.HR();
+    GP.BUTTON_LINK(form.preferences.c_str(), "Preferences");
+    GP.BUTTON_LINK(form.WiFiConfig.c_str(), "WiFi configuration");
+    GP.BUTTON_LINK(form.mqttConfig.c_str(), "MQTT configuration");
+    GP.BUTTON_LINK(form.factoryReset.c_str(), "Factory reset");
+    GP.BUTTON_LINK(form.firmwareUpgrade.c_str(), "Firmware upgrade");
+    GP.HR();
+    GP.BUTTON_LINK(form.root.c_str(), "Back");
 
+  //Журнал
+  } else if (portal.uri() == form.log){
+    GP.AREA_LOG(glog, 20);
+    GP.BUTTON_LINK(form.root.c_str(), "Back");
+
+  //Настройки
   } else if (portal.uri() == form.preferences){
     GP.FORM_BEGIN(form.preferences.c_str());
       GP.TITLE("Preferences");
@@ -41,9 +48,10 @@ void portalBuild(){
         GP.LABEL("Version: "+version); GP.BREAK();
         GP.LABEL("MAC adress: "+WiFi.macAddress()); GP.BREAK();
       GP.BLOCK_END();
-      
-      GP.SUBMIT("Save");    GP.BREAK();
-    GP.FORM_END();    GP.FORM_END();
+
+      GP.HR();
+      GP.SUBMIT("Save");
+    GP.FORM_END();
     GP.BUTTON_LINK(form.config.c_str(), "Back");
 
 
@@ -76,7 +84,8 @@ void portalBuild(){
           GP.PASS("pass", "Password", data.password);GP.BREAK();
         GP.BLOCK_END();
         
-        GP.SUBMIT("Save and reboot");    GP.BREAK();
+        GP.HR();
+        GP.SUBMIT("Save and reboot");
         GP.BUTTON_LINK(form.config.c_str(), "Back");
       GP.FORM_END();
 
@@ -104,9 +113,10 @@ void portalBuild(){
         GP.NUMBER("status_delay", "Message", data.status_delay); GP.BREAK();
       GP.BLOCK_END();
 
-      GP.SUBMIT("Save and reboot"); GP.BREAK();
-      GP.BUTTON_LINK(form.mqttTopic.c_str(), "MQTT Topic"); GP.BREAK();
-      GP.BUTTON_LINK(form.config.c_str(), "Back"); GP.BREAK();
+      GP.HR();
+      GP.SUBMIT("Save and reboot");
+      GP.BUTTON_LINK(form.mqttTopic.c_str(), "MQTT Topic");
+      GP.BUTTON_LINK(form.config.c_str(), "Back");
     GP.FORM_END();
     
   // Страница конфигурации топиков mqtt
@@ -125,7 +135,8 @@ void portalBuild(){
         GP.TEXT("stateTopic", "State topic", data.stateTopic); GP.BREAK();
       GP.BLOCK_END();
 
-      GP.SUBMIT("Save and reboot"); GP.BREAK();
+      GP.HR();
+      GP.SUBMIT("Save and reboot");
       GP.BUTTON_LINK(form.mqttConfig.c_str(), "Back");
     GP.FORM_END();   
 
@@ -138,13 +149,15 @@ void portalBuild(){
         GP.LABEL("I'm really understand what I do");           
         GP.CHECK("resetAllow", resetAllow);  GP.BREAK(); 
       GP.BOX_END();
-      GP.SUBMIT("Factory reset"); GP.BREAK();
-      GP.BUTTON_LINK(form.config.c_str(), "Back");  GP.BREAK();
+      
+      GP.HR();      
+      GP.SUBMIT("Factory reset");
+      GP.BUTTON_LINK(form.config.c_str(), "Back");;
     GP.FORM_END();
     
     // главная страница, корень, "/"
   } else {
-    GP.FORM_BEGIN(form.status.c_str());
+    GP.FORM_BEGIN(form.root.c_str());
        GP.BLOCK_TAB_BEGIN("Control");
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL( data.label ); GP.SWITCH("switch", Relay1.GetState());
@@ -171,7 +184,7 @@ void portalBuild(){
       
       GP.BLOCK_TAB_BEGIN("MQTT");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());          
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());
         GP.BOX_END(); 
       GP.BLOCK_END();
 
@@ -182,8 +195,9 @@ void portalBuild(){
           GP.LABEL(String(timeleftAP),"wifiAPTimer"); GP.BREAK();
         };
       GP.BLOCK_END();
-      
-      GP.BUTTON_LINK(form.config.c_str(), "Configuration"); GP.BREAK();
+      GP.HR();
+      GP.BUTTON_LINK(form.config.c_str(), "Configuration");
+      GP.BUTTON_LINK(form.log.c_str(), "Log");
     GP.FORM_END();
   }
   BUILD_END();
@@ -213,7 +227,6 @@ void portalAction(){
 }
 
 void portalCheck(){
-
   Serial.print("Portal form");
   Serial.println(portal.form());
   if (portal.form()) {
@@ -231,7 +244,7 @@ void portalCheck(){
     // Factory reset
     } else if(portal.form(form.factoryReset)){
       Serial.println("Factory reset"); 
-      if(portal.getCheck("resetAllow"));
+      if(portal.getCheck("resetAllow"))
         factoryReset();
     
     // Preferences
@@ -265,17 +278,49 @@ void portalCheck(){
   }
 
   if (portal.update()){
-      long rssi = WiFi.RSSI();
-      int strength = map(rssi, -80, -20, 0, 100);
-      String wifiStrength = String(strength)+"%";
-      portal.updateString("signal", wifiStrength);
+    long rssi = WiFi.RSSI();
+    int strength = map(rssi, -80, -20, 0, 100);
+    String wifiStrength = String(strength)+"%";
+    portal.updateString("signal", wifiStrength);
 
-      portal.updateInt("switch", Relay1.GetState());
-      portal.updateInt("mqttStatusLed",client.isConnected());
-      String ipAdress = WiFi.localIP().toString();
-      portal.updateString("ipAddress", ipAdress);    
+    portal.updateInt("switch", Relay1.GetState());
+    portal.updateInt("mqttStatusLed",client.isConnected());
+    String ipAdress = WiFi.localIP().toString();
+    portal.updateString("ipAddress", ipAdress);    
 
-      uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
-      portal.updateInt("wifiAPTimer", timeleftAP);
+    uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
+    portal.updateInt("wifiAPTimer", timeleftAP);
+
+    portal.updateLog(glog);
   }
+}
+
+void OTAbuild(bool UpdateEnd, const String& UpdateError) {
+  GP.BUILD_BEGIN(400);
+    #ifndef GP_OTA_LIGHT
+      GP.THEME(GP_DARK);
+    #else
+      GP.THEME(GP_LIGHT);
+    #endif
+
+    if (!UpdateEnd) {
+      GP.BLOCK_TAB_BEGIN(F("Firmware upgrade"));
+        GP.OTA_FIRMWARE();
+      GP.BLOCK_END();
+      GP.BUTTON_LINK(form.config.c_str(), "Back");
+    } else if (UpdateError.length()) {
+      GP.BLOCK_TAB_BEGIN(F("Firmware upgrade"));
+        GP.TITLE(String(F("Update error: ")) + UpdateError);
+        GP.BUTTON_LINK(form.firmwareUpgrade.c_str(), F("Refresh"));
+      GP.BLOCK_END();
+        
+    } else {
+      GP.BLOCK_TAB_BEGIN(F("Firmware upgrade"));
+        GP.TITLE(F("Update Success!"));
+        GP.TITLE(F("Rebooting..."));
+      GP.BLOCK_END();
+      GP.BUTTON_LINK(form.root.c_str(), "Home");
+    }
+    
+  GP.BUILD_END();
 }

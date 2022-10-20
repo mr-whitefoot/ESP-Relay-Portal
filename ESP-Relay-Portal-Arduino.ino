@@ -3,12 +3,13 @@
 #include <EspMQTTClient.h>
 #include <ArduinoJson.h>
 #include <TimerMs.h>
+#include <LittleFS.h>
 #include <GyverPortal.h>
 #include <EEManager.h>
 #include "ESPRelay.h"
 
 
-String version = "1.6.1";
+String version = "1.6.2";
 
 struct Data {
   //Data
@@ -41,13 +42,15 @@ struct Data {
   char stateTopic[100]     = "homeassistant/switch/relay/state";
 };
 
-#define WIFIAPTIMER 120000
+#define WIFIAPTIMER 180000
 Data data;
 GyverPortal portal;
 EEManager memory(data);
+GPlog glog("log");
 
 struct Form{
-  String status = "/status";
+  String root = "/";
+  String log = "/log";
   String config = "/config";
   String preferences = "/config/preferences";
   String WiFiConfig ="/config/wifi_config";
@@ -78,6 +81,10 @@ void portalAction();
 void portalCheck();
 void factoryReset();
 void ChangeRelayState();
+void println(String text);
+void print(String text);
+
+
 
 #include "webface.h"
 #include "mqtt.h"

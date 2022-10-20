@@ -8,13 +8,12 @@ public:
         pinMode(Pin, OUTPUT);
         this->InvertMode = InvertMode;
         SetState(false);
-
     }
-
-
+  
     void ChangeStateCallback( void (*handler)()) {
         CallbackHandler = *handler;
     }
+
     void SetPin( int Pin ){
       this->Pin = Pin;
       pinMode(Pin, OUTPUT);
@@ -39,15 +38,13 @@ public:
       if (*CallbackHandler) CallbackHandler();
     }
 
-
     bool GetState(){ return RelayState; }
 
-
-   void ResetState( ){
-        if (GetState())
-            this->SetState(false);
-        else
-            this->SetState(true);
+    void ResetState( ){
+      if (GetState())
+          this->SetState(false);
+      else
+          this->SetState(true);
     }
 
 private:

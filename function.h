@@ -1,23 +1,38 @@
+void println(String text){
+  Serial.println(text);
+  glog.println(text);
+}
+
+void print(String text){
+  Serial.print(text);
+  glog.print(text);
+}
+
 void startup(){
   Serial.begin(9600);
-  Serial.println();
-  Serial.println("Booting...");
-  Serial.println("Initialize EEPROM");
+  //Журнал
+  glog.start(1000);
+
+  println("Booting...");
+  println("Initialize EEPROM");
   EEPROM.begin(sizeof(data) + 1); // +3 на ключ
   memory.begin(0, 'k');         // запускаем менеджер памяти
 
   //Relay
+  println("Initialize relay");
   Relay1.SetPin(0);
   Relay1.SetInvertMode(data.relayInvertMode);
   Relay1.ChangeStateCallback(ChangeRelayState);
-  if(data.relaySaveStatus){ Relay1.SetState(data.state); };
+  if(data.relaySaveStatus){ 
+      println("Restore relay state");
+      Relay1.SetState(data.state); };
 
   // Connecting WiFi
-  Serial.println(F("Initialize WiFi"));
-
+  println("Initialize WiFi");
   if (data.factoryReset == true || data.wifiAP == true ) wifiAp();
 
   // Enable OTA update
+  println("Starting OTA updates");
   ArduinoOTA.begin();
 
   if (data.factoryReset==false){
@@ -25,6 +40,7 @@ void startup(){
     else wifiConnect();
 
   //MQTT
+  println("Starting MQTT");
   client.setWifiCredentials(data.ssid, data.password);
   client.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
   client.setMqttClientName(data.device_name);
@@ -32,34 +48,37 @@ void startup(){
   client.setMaxPacketSize(1000);
 
   //Таймеры
+  println("Starting timers");
   MessageTimer.setTime(data.status_delay*1000);
   MessageTimer.start();
   ServiceMessageTimer.setTime(data.avaible_delay*1000);
   ServiceMessageTimer.start();
 
   // подключаем конструктор портала и запускаем
+  println("Starting portal");
   portal.attachBuild(portalBuild);
   portal.disableAuth();
   portal.attach(portalAction);
+  portal.OTA.attachUpdateBuild(OTAbuild);
   portal.start(data.device_name);
   portal.enableOTA();
 
-  Serial.println("Boot complete");
+  println("Boot complete");
   }
 }
 
 void restart();
 void wifiAp(){
   // создаём точку доступа
-  Serial.println(F("Create AP"));
+  println("Create AP");
 
   String ssid = data.device_name;
   ssid += "AP";
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid);
   IPAddress ip = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(ip);
+  print("AP IP address: ");
+  println(ip.toString());
 
   data.wifiConnectTry = 0;
   memory.updateNow();
@@ -83,11 +102,11 @@ void wifiConnect(){
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(100);
-    Serial.println("Wifi connecting...");
+    println("Wifi connecting...");
     notConnectedCounter++;
     if (notConnectedCounter > 150)
     { // Reset board if not connected after 5s
-      Serial.println("Resetting due to Wifi not connecting...");
+      println("Resetting due to Wifi not connecting...");
 
       data.wifiConnectTry += 1;
       if(data.wifiConnectTry == 100);
@@ -100,12 +119,12 @@ void wifiConnect(){
 
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
-  Serial.print("Wifi connected, IP address: ");
-  Serial.println(WiFi.localIP());
+  print("Wifi connected, IP address: ");
+  println(WiFi.localIP().toString());
 }
 
 void factoryReset(){
-  Serial.println("Factory reset");
+  println("Factory reset");
   memory.reset();
   data.factoryReset = true;
   memory.updateNow();
@@ -113,14 +132,17 @@ void factoryReset(){
 }
 
 void restart(){
-  Serial.println("ESP restart");
+  println("Rebooting...");
   ESP.restart();
 }
 
 void ChangeRelayState(){
+  println("Change relay state triggered");
   if(data.relaySaveStatus){
+    println("Save relay state");
     data.state = Relay1.GetState();
     memory.updateNow();
   }
   publishRelay();
 }
+
