@@ -15,13 +15,13 @@ WiFi реле на ESP-01/ESP-01s.
 
 ### Интерфейс web портала:
 Главный экран<br>
-<img width="359" alt="main" src="https://user-images.githubusercontent.com/16363451/197059546-f0627bdd-957d-48d7-89d7-9c3e636636f5.png">
+<img width="389" alt="main" src="https://user-images.githubusercontent.com/16363451/197064457-455fc27a-cce4-4100-985f-9d602ddb5188.png">
 
 Выбор настроек<br>
 <img src="https://user-images.githubusercontent.com/16363451/197059246-f744cb51-43c3-43cf-b79c-b898cdecf48b.png" width="400">
 
 Настройки реле<br>
-<img width="388" alt="preferences" src="https://user-images.githubusercontent.com/16363451/197059585-c0c16152-2a12-4f5e-91a0-fd9aacb6337a.png">
+<img width="386" alt="preferences" src="https://user-images.githubusercontent.com/16363451/197064615-bbcfbd92-4fc6-41d3-a8e4-4dd3bb9980e8.png">
 
 Обновление прошивки по Wi-Fi<br>
 <img src="https://user-images.githubusercontent.com/16363451/197058992-d8bc1296-aa61-4ff9-ba36-1ad8a007244e.png" width="400">
