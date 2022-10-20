@@ -15,16 +15,16 @@ WiFi реле на ESP-01/ESP-01s.
 
 ### Интерфейс web портала:
 Главный экран<br>
-<img src="https://user-images.githubusercontent.com/16363451/196786025-64c60964-c8f2-474a-921a-4b0dbea100df.jpg" width="400" alt="Главный экран">
+<img width="389" alt="main" src="https://user-images.githubusercontent.com/16363451/197064457-455fc27a-cce4-4100-985f-9d602ddb5188.png">
 
 Выбор настроек<br>
-<img src="https://user-images.githubusercontent.com/16363451/196786045-36999196-129e-421d-b48d-7a00b394fab5.jpg" width="400">
+<img src="https://user-images.githubusercontent.com/16363451/197059246-f744cb51-43c3-43cf-b79c-b898cdecf48b.png" width="400">
 
 Настройки реле<br>
-<img src="https://user-images.githubusercontent.com/16363451/196786050-6f4aeb0a-c2ae-4253-ac1b-81ab8fa181ec.jpg" width="400">
+<img width="386" alt="preferences" src="https://user-images.githubusercontent.com/16363451/197064615-bbcfbd92-4fc6-41d3-a8e4-4dd3bb9980e8.png">
 
 Обновление прошивки по Wi-Fi<br>
-<img src="https://user-images.githubusercontent.com/16363451/196786053-1dc90509-0d43-4537-bd3b-61cb8376c4b2.jpg" width="400">
+<img src="https://user-images.githubusercontent.com/16363451/197058992-d8bc1296-aa61-4ff9-ba36-1ad8a007244e.png" width="400">
 
 
 ### Первоначальная настройка:
