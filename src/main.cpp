@@ -6,10 +6,9 @@
 #include <LittleFS.h>
 #include <GyverPortal.h>
 #include <EEManager.h>
-#include "ESPRelay.h"
+#include <ESPRelay.h>
 
-
-String version = "1.6.2";
+String version = "2.0.0";
 
 struct Data {
   //Data
@@ -17,7 +16,7 @@ struct Data {
   char device_name[32] = "relay";
   bool relayInvertMode = false;
   bool factoryReset = true;
-  int wifiConnectTry = 0;
+  byte wifiConnectTry = 0;
   bool wifiAP;
   bool relaySaveStatus = false;
   bool state;
@@ -47,49 +46,41 @@ Data data;
 GyverPortal portal;
 EEManager memory(data);
 GPlog glog("log");
+WiFiEventHandler onSoftAPModeStationConnected, onSoftAPModeStationDisconnected, onStationModeConnected;
+
 
 struct Form{
-  String root = "/";
-  String log = "/log";
-  String config = "/config";
-  String preferences = "/config/preferences";
-  String WiFiConfig ="/config/wifi_config";
-  String mqttConfig = "/config/mqtt_config";
-  String mqttTopic = "/config/mqtt_config/topic";
-  String factoryReset = "/config/factory_reset";
-  String firmwareUpgrade = "/ota_update";
+  const char* root = "/";
+  const char* log = "/log";
+  const char* config = "/config";
+  const char* preferences = "/config/preferences";
+  const char* WiFiConfig ="/config/wifi_config";
+  const char* mqttConfig = "/config/mqtt_config";
+  const char* mqttTopic = "/config/mqtt_config/topic";
+  const char* factoryReset = "/config/factory_reset";
+  const char* firmwareUpgrade = "/ota_update";
 };
 
 Form form;
-
-TimerMs MessageTimer;
-TimerMs ServiceMessageTimer;
-TimerMs WiFiApTimer;
+TimerMs MessageTimer, ServiceMessageTimer, WiFiApTimer, wifiApStaTimer;
 EspMQTTClient client;
 ESPRelay Relay1;
 bool resetAllow;
 
+
 void publishRelay();
 void SendDiscoveryMessage();
 void SendAvailableMessage();
-void publishLed();
 void wifiAp();
 void wifiConnect();
 void mqttPublish();
-void portalBuild();
-void portalAction();
-void portalCheck();
 void factoryReset();
 void ChangeRelayState();
-void println(String text);
-void print(String text);
 
 
-
-#include "webface.h"
-#include "mqtt.h"
-#include "function.h"
-
+#include <webface.h>
+#include <function.h>
+#include <mqtt.h>
 
 void setup() {
   startup();
@@ -101,8 +92,7 @@ void loop(){
   client.loop();
   mqttPublish();
   portal.tick();
+  WiFiApTimer.tick(); 
+  wifiApStaTimer.tick();
+
 }
-
-
-
-

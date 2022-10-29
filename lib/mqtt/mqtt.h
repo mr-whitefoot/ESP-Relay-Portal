@@ -29,7 +29,7 @@ void onConnectionEstablished() {
 void publishRelay() {
   println("MQTT publish status");
 
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(256);
   char buffer[256];
   doc["switch"] = Relay1.GetState();
   doc["IPAddress"] = WiFi.localIP().toString();
@@ -39,7 +39,7 @@ void publishRelay() {
 
 void SendDiscoveryMessage( ){
   println("MQTT publish discovery message");
-  DynamicJsonDocument doc(2048);
+  DynamicJsonDocument doc(1024);
   char buffer[1024];
 
   String device_name = data.device_name;

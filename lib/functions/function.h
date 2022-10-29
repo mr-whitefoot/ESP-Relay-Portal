@@ -1,11 +1,15 @@
-void println(String text){
+void println(const String& text){
   Serial.println(text);
   glog.println(text);
 }
 
-void print(String text){
+void print(const String& text){
   Serial.print(text);
   glog.print(text);
+}
+
+void wifiApStaTimerHandler(){
+  WiFi.mode(WIFI_STA);
 }
 
 void startup(){
@@ -53,21 +57,27 @@ void startup(){
   MessageTimer.start();
   ServiceMessageTimer.setTime(data.avaible_delay*1000);
   ServiceMessageTimer.start();
-
-  // подключаем конструктор портала и запускаем
-  println("Starting portal");
-  portal.attachBuild(portalBuild);
-  portal.disableAuth();
-  portal.attach(portalAction);
-  portal.OTA.attachUpdateBuild(OTAbuild);
-  portal.start(data.device_name);
-  portal.enableOTA();
+  wifiApStaTimer.setTime(WIFIAPTIMER);
+  wifiApStaTimer.attach(wifiApStaTimerHandler);
 
   println("Boot complete");
   }
 }
 
+void portalStart(){
+  println("Starting portal");
+  portal.attachBuild(portalBuild);
+  portal.disableAuth();
+  portal.attach(portalAction);
+  portal.OTA.attachUpdateBuild(OTAbuild);
+  if (data.wifiAP == true ) portal.start(WIFI_AP);
+  else portal.start(data.device_name);
+  portal.enableOTA();
+}
+
 void restart();
+
+
 void wifiAp(){
   // создаём точку доступа
   println("Create AP");
@@ -75,6 +85,17 @@ void wifiAp(){
   String ssid = data.device_name;
   ssid += "AP";
   WiFi.mode(WIFI_AP);
+  onSoftAPModeStationConnected = WiFi.onSoftAPModeStationConnected([](const WiFiEventSoftAPModeStationConnected& event)
+  {
+    portalStart();
+  });
+
+  onSoftAPModeStationDisconnected = WiFi.onSoftAPModeStationDisconnected([](const WiFiEventSoftAPModeStationDisconnected& event){
+    data.wifiAP = false;
+    memory.updateNow();
+    WiFiApTimer.stop();
+  });
+
   WiFi.softAP(ssid);
   IPAddress ip = WiFi.softAPIP();
   print("AP IP address: ");
@@ -83,20 +104,23 @@ void wifiAp(){
   data.wifiConnectTry = 0;
   memory.updateNow();
 
-  portal.attachBuild(portalBuild);
-  portal.attach(portalAction);
-  portal.start(WIFI_AP);
   WiFiApTimer.setTime(WIFIAPTIMER);
   WiFiApTimer.setTimerMode();
   WiFiApTimer.attach(restart);
   WiFiApTimer.start();
-  while (portal.tick()) {   // портал работает
-    WiFiApTimer.tick(); };
 }
 
 
 void wifiConnect(){
+  WiFi.mode(WIFI_AP_STA);
   WiFi.hostname(data.device_name);
+
+ onStationModeConnected = WiFi.onStationModeConnected([](const WiFiEventStationModeConnected& event)
+  {
+    portalStart();
+    wifiApStaTimer.start();
+  });
+
   WiFi.begin(data.ssid, data.password);
   uint32_t notConnectedCounter = 0;
   while (WiFi.status() != WL_CONNECTED)
@@ -109,7 +133,7 @@ void wifiConnect(){
       println("Resetting due to Wifi not connecting...");
 
       data.wifiConnectTry += 1;
-      if(data.wifiConnectTry == 100);
+      if(data.wifiConnectTry == 100)
         data.wifiAP = true;
       memory.updateNow();
 
