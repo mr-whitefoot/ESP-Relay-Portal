@@ -12,11 +12,20 @@ void wifiApStaTimerHandler(){
   WiFi.mode(WIFI_STA);
 }
 
+void mqttStart(){
+  println("Starting MQTT"); 
+  mqttClient.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
+  mqttClient.setMqttClientName(data.device_name);
+    //Настройка максимальной длинны сообщения MQTT
+  mqttClient.setMaxPacketSize(1000);
+}
+
 void startup(){
   Serial.begin(9600);
   //Журнал
   glog.start(1000);
 
+  println("-------------------------------");
   println("Booting...");
   println("Initialize EEPROM");
   EEPROM.begin(sizeof(data) + 1); // +3 на ключ
@@ -44,12 +53,8 @@ void startup(){
     else wifiConnect();
 
   //MQTT
-  println("Starting MQTT");
-  client.setWifiCredentials(data.ssid, data.password);
-  client.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
-  client.setMqttClientName(data.device_name);
-  //Настройка максимальной длинны сообщения MQTT
-  client.setMaxPacketSize(1000);
+  mqttStart();
+  
 
   //Таймеры
   println("Starting timers");
@@ -61,6 +66,7 @@ void startup(){
   wifiApStaTimer.attach(wifiApStaTimerHandler);
 
   println("Boot complete");
+  println("-------------------------------");
   }
 }
 
@@ -74,8 +80,6 @@ void portalStart(){
   else portal.start(data.device_name);
   portal.enableOTA();
 }
-
-void restart();
 
 
 void wifiAp(){
@@ -121,12 +125,12 @@ void wifiConnect(){
     wifiApStaTimer.start();
   });
 
+  println("Wifi connecting...");
   WiFi.begin(data.ssid, data.password);
   uint32_t notConnectedCounter = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(100);
-    println("Wifi connecting...");
     notConnectedCounter++;
     if (notConnectedCounter > 150)
     { // Reset board if not connected after 5s
@@ -157,6 +161,10 @@ void factoryReset(){
 
 void restart(){
   println("Rebooting...");
+  println("-------------------------------");
+  SendAvailableMessage("offline");
+  mqttClient.loop();
+  portal.tick();
   ESP.restart();
 }
 
@@ -169,4 +177,3 @@ void ChangeRelayState(){
   }
   publishRelay();
 }
-

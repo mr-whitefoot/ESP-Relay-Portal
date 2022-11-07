@@ -2,7 +2,8 @@ void portalBuild(){
   uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
   
   GP.BUILD_BEGIN();
-  GP.THEME(GP_DARK);
+  if (data.theme == LIGHT_THEME ) GP.THEME(GP_LIGHT);
+  else GP.THEME(GP_DARK);
 
   // список имён компонентов на обновление
   GP.UPDATE("signal,switch,mqttStatusLed,ipAddress,wifiAPTimer");
@@ -17,6 +18,7 @@ void portalBuild(){
     GP.BUTTON_LINK(form.mqttConfig, "MQTT configuration");
     GP.BUTTON_LINK(form.factoryReset, "Factory reset");
     GP.BUTTON_LINK(form.firmwareUpgrade, "Firmware upgrade");
+    GP.BUTTON("rebootButton", "Reboot");
     GP.HR();
     GP.BUTTON_LINK(form.root, "Back");
 
@@ -36,6 +38,9 @@ void portalBuild(){
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Settings");
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("Theme");   GP.SELECT("theme", "Light,Dark", data.theme);
+        GP.BOX_END();
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL("Relay invert mode"); GP.SWITCH("relayInvertMode", data.relayInvertMode);
         GP.BOX_END();
@@ -97,7 +102,7 @@ void portalBuild(){
 
       GP.BLOCK_TAB_BEGIN("Information");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());          
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", mqttClient.isConnected());          
         GP.BOX_END();
       GP.BLOCK_END();
 
@@ -113,18 +118,7 @@ void portalBuild(){
         GP.NUMBER("status_delay", "Message", data.status_delay); GP.BREAK();
       GP.BLOCK_END();
 
-      GP.HR();
-      GP.SUBMIT("Save and reboot");
-      GP.BUTTON_LINK(form.mqttTopic, "MQTT Topic");
-      GP.BUTTON_LINK(form.config, "Back");
-    GP.FORM_END();
-    
-  // Страница конфигурации топиков mqtt
-  } else if (portal.uri() == form.mqttTopic) {
-    GP.FORM_BEGIN(form.mqttTopic);
-      GP.TITLE("MQTT topics");
-      GP.HR();
-      GP.BLOCK_BEGIN();
+      GP.BLOCK_TAB_BEGIN("MQTT topics");
         GP.LABEL("Discovery topic"); GP.BREAK();
         GP.TEXT("discoveryTopic", "Discovery topic", data.discoveryTopic); GP.BREAK();
         GP.LABEL("Command topic"); GP.BREAK();
@@ -137,7 +131,7 @@ void portalBuild(){
 
       GP.HR();
       GP.SUBMIT("Save and reboot");
-      GP.BUTTON_LINK(form.mqttConfig, "Back");
+      GP.BUTTON_LINK(form.config, "Back");;
     GP.FORM_END();   
 
     //Сброс до заводских настроек
@@ -184,7 +178,7 @@ void portalBuild(){
       
       GP.BLOCK_TAB_BEGIN("MQTT");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", client.isConnected());
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", mqttClient.isConnected());
         GP.BOX_END(); 
       GP.BLOCK_END();
 
@@ -230,6 +224,7 @@ void portalCheck(){
       portal.copyStr("device_name", data.device_name);
       data.relayInvertMode = portal.getCheck("relayInvertMode");
       Relay1.SetInvertMode( data.relayInvertMode );
+      portal.copyInt("theme", data.theme);
       memory.updateNow();
       
       //MQTT Config
@@ -240,17 +235,12 @@ void portalCheck(){
       portal.copyStr("mqttPassword", data.mqttPassword);
       data.avaible_delay = portal.getInt("avaible_delay");
       data.status_delay = portal.getInt("status_delay");
-      memory.updateNow();
-      ESP.restart();
-
-    //Топики
-    } else if(portal.form(form.mqttTopic)){
       portal.copyStr("discoveryTopic", data.discoveryTopic);
       portal.copyStr("commandTopic", data.commandTopic);
       portal.copyStr("avaibleTopic", data.avaibleTopic);
       portal.copyStr("stateTopic", data.stateTopic);
       memory.updateNow();
-      ESP.restart();
+      restart();
     }
   }
 
@@ -261,7 +251,7 @@ void portalCheck(){
     portal.updateString("signal", wifiStrength);
 
     portal.updateInt("switch", Relay1.GetState());
-    portal.updateInt("mqttStatusLed",client.isConnected());
+    portal.updateInt("mqttStatusLed",mqttClient.isConnected());
     String ipAdress = WiFi.localIP().toString();
     portal.updateString("ipAddress", ipAdress);    
 
@@ -290,6 +280,9 @@ void portalAction(){
     if (portal.click("relaySaveStatus")){
       data.relaySaveStatus = portal.getCheck("relaySaveStatus");
       memory.updateNow();
+    }
+    if (portal.click("rebootButton")){
+      restart();
     }
   }
 }
