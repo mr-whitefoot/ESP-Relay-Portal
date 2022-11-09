@@ -25,7 +25,6 @@ void onConnectionEstablished() {
   });
 }
 
-
 void publishRelay() {
   println("MQTT publish status");
 
@@ -75,7 +74,6 @@ void SendAvailableMessage(const String &mode = "online"){
   println("MQTT publish avaible message");
   mqttClient.publish(data.avaibleTopic, mode, false);
 }
-
 
 void mqttPublish() {
   if (mqttClient.isConnected() && MessageTimer.tick()) {

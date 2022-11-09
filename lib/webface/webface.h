@@ -5,11 +5,11 @@ void portalBuild(){
   if (data.theme == LIGHT_THEME ) GP.THEME(GP_LIGHT);
   else GP.THEME(GP_DARK);
 
-  // список имён компонентов на обновление
+  // Update components
   GP.UPDATE("signal,switch,mqttStatusLed,ipAddress,wifiAPTimer");
 
 
-  // Страница конфигурации
+  // Configuration page
   if (portal.uri() == form.config) {
     GP.TITLE("Configuration");
     GP.HR();
@@ -22,12 +22,12 @@ void portalBuild(){
     GP.HR();
     GP.BUTTON_LINK(form.root, "Back");
 
-  //Журнал
+  //Log
   } else if (portal.uri() == form.log){
     GP.AREA_LOG(glog, 20);
     GP.BUTTON_LINK(form.root, "Back");
 
-  //Настройки
+  //Preferences
   } else if (portal.uri() == form.preferences){
     GP.FORM_BEGIN(form.preferences);
       GP.TITLE("Preferences");
@@ -60,7 +60,7 @@ void portalBuild(){
     GP.BUTTON_LINK(form.config, "Back");
 
 
-    // страница конфигурации wifi 
+    // WiFi configuration page 
   } else if (portal.uri() == form.WiFiConfig) {
       GP.FORM_BEGIN(form.WiFiConfig);
         GP.TITLE("WiFi");
@@ -94,7 +94,7 @@ void portalBuild(){
         GP.BUTTON_LINK(form.config, "Back");
       GP.FORM_END();
 
-    // страница конфигурации MQTT
+    // MQTT configuration page 
   } else if (portal.uri() == form.mqttConfig) {
     GP.FORM_BEGIN(form.mqttConfig);
       GP.TITLE("MQTT");
@@ -134,7 +134,7 @@ void portalBuild(){
       GP.BUTTON_LINK(form.config, "Back");;
     GP.FORM_END();   
 
-    //Сброс до заводских настроек
+    //Factory reset page 
   } else if (portal.uri() == form.factoryReset) {
     GP.FORM_BEGIN(form.factoryReset);
       GP.TITLE( "Factory reset" );
@@ -149,7 +149,7 @@ void portalBuild(){
       GP.BUTTON_LINK(form.config, "Back");;
     GP.FORM_END();
     
-    // главная страница, корень, "/"
+    // Root page, "/"
   } else {
     GP.FORM_BEGIN(form.root);
        GP.BLOCK_TAB_BEGIN("Control");
@@ -197,12 +197,8 @@ void portalBuild(){
   BUILD_END();
 }
 
-void portalCheck(){
-  Serial.print("Portal form");
-  Serial.println(portal.form());
-  if (portal.form()) {
-    Serial.println("Portal form handle");
-    
+void portalCheckForm(){
+  if (portal.form()) {    
     //WiFi config
     if (portal.form(form.WiFiConfig)) {
       portal.copyStr("ssid", data.ssid);
@@ -263,8 +259,7 @@ void portalCheck(){
 }
 
 void portalAction(){
-  Serial.println("Portal Action");
-  portalCheck();
+  portalCheckForm();
     
   if (portal.click()){
     Serial.println("Portal click");
@@ -287,8 +282,7 @@ void portalAction(){
   }
 }
 
-
-
+//Custom OTA page
 void OTAbuild(bool UpdateEnd, const String& UpdateError) {
   GP.BUILD_BEGIN(400);
     #ifndef GP_OTA_LIGHT

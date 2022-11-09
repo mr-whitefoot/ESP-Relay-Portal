@@ -1,14 +1,11 @@
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
 #include <EspMQTTClient.h>
 #include <ArduinoJson.h>
 #include <TimerMs.h>
-#include <LittleFS.h>
 #include <GyverPortal.h>
 #include <EEManager.h>
 #include <ESPRelay.h>
 
-String version = "2.1.0";
+String version = "2.1.1";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 
@@ -23,11 +20,9 @@ struct Data {
   bool relaySaveStatus = false;
   bool state;
   int  theme = LIGHT_THEME;
-  
   // WiFi
   char ssid[32];
   char password[32];
-
   //MQTT
   char mqttServerIp[32];
   short mqttServerPort = 1883;
@@ -36,7 +31,6 @@ struct Data {
   //Delay before send message in seconds
   int status_delay = 10;
   int avaible_delay = 60;
-  
   //MQTT Topic
   char discoveryTopic[100] = "homeassistant/switch/relay/config";
   char commandTopic[100]   = "homeassistant/switch/relay/set";
@@ -50,7 +44,6 @@ GyverPortal portal;
 EEManager memory(data);
 GPlog glog("log");
 WiFiEventHandler onSoftAPModeStationConnected, onSoftAPModeStationDisconnected, onStationModeConnected;
-
 
 struct Form{
   const char* root = "/";
@@ -80,7 +73,6 @@ void ChangeRelayState();
 void mqttStart();
 void restart();
 
-
 #include <webface.h>
 #include <function.h>
 #include <mqtt.h>
@@ -88,7 +80,6 @@ void restart();
 void setup() {
   startup();
 }
-
 
 void loop(){
   ArduinoOTA.handle();
