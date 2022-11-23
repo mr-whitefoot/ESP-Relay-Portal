@@ -5,9 +5,10 @@
 #include <EEManager.h>
 #include <ESPRelay.h>
 
-String version = "2.1.1";
+String version = "2.1.2";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
+#define RELAY_PIN 0
 
 struct Data {
   //Data
@@ -72,6 +73,7 @@ void factoryReset();
 void ChangeRelayState();
 void mqttStart();
 void restart();
+
 
 #include <webface.h>
 #include <function.h>

@@ -183,10 +183,15 @@ void portalBuild(){
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Information");
-        GP.LABEL("Relay version: "+version); GP.BREAK();
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("Firmware version");
+          GP.LABEL(version);
+        GP.BOX_END();
         if (WiFiApTimer.active()){
-          GP.LABEL("Restart in:");
-          GP.LABEL(String(timeleftAP),"wifiAPTimer"); GP.BREAK();
+          GP.BOX_BEGIN(GP_EDGES);
+            GP.LABEL("Restart in");
+            GP.LABEL(String(timeleftAP),"wifiAPTimer");
+          GP.BOX_END();
         };
       GP.BLOCK_END();
       GP.HR();

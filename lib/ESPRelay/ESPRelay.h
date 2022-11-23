@@ -1,12 +1,10 @@
 #include <Arduino.h>
-
-class ESPRelay
-{
-public:
-    ESPRelay(int Pin = 0, bool InvertMode = false ){
-        this->Pin = Pin;
-        pinMode(Pin, OUTPUT);
-        this->InvertMode = InvertMode;
+class ESPRelay{
+  public:
+    ESPRelay(int pin = 0, bool invertMode = false ){
+        this->pin = pin;
+        pinMode(pin, OUTPUT);
+        this->invertMode = invertMode;
         SetState(false);
     }
   
@@ -14,31 +12,31 @@ public:
         CallbackHandler = *handler;
     }
 
-    void SetPin( int Pin ){
-      this->Pin = Pin;
-      pinMode(Pin, OUTPUT);
+    void SetPin( int pin ){
+      this->pin = pin;
+      pinMode(pin, OUTPUT);
       SetState(false);
     }
     
-    void SetInvertMode( bool InvertMode ){
-      this->InvertMode = InvertMode;
+    void SetInvertMode( bool invertMode ){
+      this->invertMode = invertMode;
       SetState(false);
     }
 
-    void SetState( bool RelayState ){
-      if (RelayState){
-        if (InvertMode == true) digitalWrite(Pin, LOW );
-        else digitalWrite(Pin, HIGH );
-        this->RelayState = true; }
+    void SetState( bool relayState ){
+      if (relayState){
+        if (invertMode == true) digitalWrite(pin, LOW );
+        else digitalWrite(pin, HIGH );
+        this->relayState = true; }
       else{
-        if (InvertMode == true) digitalWrite(Pin, HIGH );
-        else digitalWrite(Pin, LOW ); 
-        this->RelayState = false; }
+        if (invertMode == true) digitalWrite(pin, HIGH );
+        else digitalWrite(pin, LOW ); 
+        this->relayState = false; }
 
       if (*CallbackHandler) CallbackHandler();
     }
 
-    bool GetState(){ return RelayState; }
+    bool GetState(){ return relayState; }
 
     void ResetState( ){
       if (GetState())
@@ -47,9 +45,42 @@ public:
           this->SetState(true);
     }
 
-private:
-    int Pin;
-    bool InvertMode;
-    bool RelayState;
+  protected:
+    int pin;
+    bool invertMode;
+    bool relayState;
     void (*CallbackHandler)() = nullptr;
+};
+
+
+class ESPRelayButton: public ESPRelay{
+  public:
+    void SetState( bool relayState ){
+      if (relayState){
+        if (invertMode == true) digitalWrite(pin, LOW );
+        else digitalWrite(pin, HIGH );
+
+        this->relayState = true;
+        long now = millis();
+        ButtonOn = now;
+      }
+      else{
+        if (invertMode == true) digitalWrite(pin, HIGH );
+        else digitalWrite(pin, LOW );
+        this->relayState = false; }
+
+      if (*CallbackHandler) CallbackHandler(); 
+    }
+    
+    bool tick( ){
+      long now = millis();
+      if ( relayState == true && (now - ButtonOn) > ButtonClick ){
+          this->SetState(false);
+          return true; }
+      else return false; 
+    }
+
+  private:
+      long ButtonOn = 0;
+      int ButtonClick = 500;
 };
