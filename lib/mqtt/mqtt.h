@@ -62,7 +62,8 @@ void SendDiscoveryMessage( ){
   JsonObject device = doc.createNestedObject("device");
   device["name"] = data.label;
   device["model"] = "ESP_" + device_name;
-  device["manufacturer"] = "whitefoot_company";
+  device["manufacturer"] = "WhiteFoot company";
+  device["sw_version"]   = version;
   JsonArray identifiers = device.createNestedArray("identifiers");
   identifiers.add("ESP_" + device_name);
 
