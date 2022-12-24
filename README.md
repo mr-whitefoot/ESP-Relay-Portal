@@ -1,4 +1,4 @@
-# ESP-Relay-Portal
+# ESP-Relay-Portal-Arduino
 
 WiFi реле на ESP-01/ESP-01s.
 

@@ -1,6 +1,6 @@
 void portalBuild(){
   uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
-
+  
   GP.BUILD_BEGIN();
   if (data.theme == LIGHT_THEME ) GP.THEME(GP_LIGHT);
   else GP.THEME(GP_DARK);
@@ -11,6 +11,7 @@ void portalBuild(){
 
   // Configuration page
   if (portal.uri() == form.config) {
+    GP.PAGE_TITLE("Configuration");
     GP.TITLE("Configuration");
     GP.HR();
     GP.BUTTON_LINK(form.preferences, "Preferences");
@@ -24,12 +25,14 @@ void portalBuild(){
 
   //Log
   } else if (portal.uri() == form.log){
+    GP.PAGE_TITLE("Log");
     GP.AREA_LOG(glog, 20);
     GP.BUTTON_LINK(form.root, "Back");
 
   //Preferences
   } else if (portal.uri() == form.preferences){
     GP.FORM_BEGIN(form.preferences);
+      GP.PAGE_TITLE("Preferences");
       GP.TITLE("Preferences");
       GP.HR();
       GP.BLOCK_TAB_BEGIN("Device name");
@@ -48,7 +51,7 @@ void portalBuild(){
           GP.LABEL("Save relay status"); GP.SWITCH("relaySaveStatus", data.relaySaveStatus);
         GP.BOX_END();
       GP.BLOCK_END();
-
+      
       GP.BLOCK_TAB_BEGIN("Information");
         GP.LABEL("Version: "+version); GP.BREAK();
         GP.LABEL("MAC adress: "+WiFi.macAddress()); GP.BREAK();
@@ -60,9 +63,10 @@ void portalBuild(){
     GP.BUTTON_LINK(form.config, "Back");
 
 
-    // WiFi configuration page
+    // WiFi configuration page 
   } else if (portal.uri() == form.WiFiConfig) {
       GP.FORM_BEGIN(form.WiFiConfig);
+        GP.PAGE_TITLE("WiFi configuration");
         GP.TITLE("WiFi");
         GP.HR();
 
@@ -77,7 +81,7 @@ void portalBuild(){
             GP.BOX_BEGIN(GP_EDGES);
               GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString(),"ipAddress");
             GP.BOX_END();}
-          else {
+          else {  
             GP.BOX_BEGIN(GP_EDGES);
               GP.LABEL("WiFi status"); GP.LED_GREEN("WiFiLed", false);
             GP.BOX_END();
@@ -88,21 +92,22 @@ void portalBuild(){
           GP.TEXT("ssid", "SSID", data.ssid);GP.BREAK();
           GP.PASS("pass", "Password", data.password);GP.BREAK();
         GP.BLOCK_END();
-
+        
         GP.HR();
         GP.SUBMIT("Save");
         GP.BUTTON_LINK(form.config, "Back");
       GP.FORM_END();
 
-    // MQTT configuration page
+    // MQTT configuration page 
   } else if (portal.uri() == form.mqttConfig) {
     GP.FORM_BEGIN(form.mqttConfig);
+      GP.PAGE_TITLE("MQTT configuration");
       GP.TITLE("MQTT");
       GP.HR();
 
       GP.BLOCK_TAB_BEGIN("Information");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", mqttClient.isConnected());
+          GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", mqttClient.isConnected());          
         GP.BOX_END();
       GP.BLOCK_END();
 
@@ -132,32 +137,34 @@ void portalBuild(){
       GP.HR();
       GP.SUBMIT("Save and reboot");
       GP.BUTTON_LINK(form.config, "Back");;
-    GP.FORM_END();
+    GP.FORM_END();   
 
-    //Factory reset page
+    //Factory reset page 
   } else if (portal.uri() == form.factoryReset) {
     GP.FORM_BEGIN(form.factoryReset);
-      GP.TITLE( "Factory reset" );
+    GP.PAGE_TITLE("Factory reset");
+      GP.TITLE("Factory reset");
       GP.HR();
       GP.BOX_BEGIN(GP_EDGES);
-        GP.LABEL("I'm really understand what I do");
-        GP.CHECK("resetAllow", resetAllow);  GP.BREAK();
+        GP.LABEL("I'm really understand what I do");           
+        GP.CHECK("resetAllow", resetAllow);  GP.BREAK(); 
       GP.BOX_END();
-
-      GP.HR();
+      
+      GP.HR();      
       GP.SUBMIT("Factory reset");
       GP.BUTTON_LINK(form.config, "Back");;
     GP.FORM_END();
-
+    
     // Root page, "/"
   } else {
+    GP.PAGE_TITLE("Portal");
     GP.FORM_BEGIN(form.root);
        GP.BLOCK_TAB_BEGIN("Control");
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL( data.label ); GP.SWITCH("switch", Relay1.GetState());
         GP.BOX_END();
       GP.BLOCK_END();
-
+    
       GP.BLOCK_TAB_BEGIN("WiFi");
         if (WiFi.status() == WL_CONNECTED){
           GP.BOX_BEGIN(GP_EDGES);
@@ -168,18 +175,18 @@ void portalBuild(){
           GP.BOX_END();
           GP.BOX_BEGIN(GP_EDGES);
             GP.LABEL("IP address"); GP.LABEL(WiFi.localIP().toString(),"ipAddress");
-          GP.BOX_END();
+          GP.BOX_END(); 
         }else{
           GP.BOX_BEGIN(GP_EDGES);
             GP.LABEL("Status");GP.LED_GREEN("WiFiLed", false);
-          GP.BOX_END();
+          GP.BOX_END(); 
         }
       GP.BLOCK_END();
-
+      
       GP.BLOCK_TAB_BEGIN("MQTT");
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL("Status"); GP.LED_GREEN("mqttStatusLed", mqttClient.isConnected());
-        GP.BOX_END();
+        GP.BOX_END(); 
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Information");
@@ -199,11 +206,11 @@ void portalBuild(){
       GP.BUTTON_LINK(form.log, "Log");
     GP.FORM_END();
   }
-  BUILD_END();
+  GP.BUILD_END();
 }
 
 void portalCheckForm(){
-  if (portal.form()) {
+  if (portal.form()) {    
     //WiFi config
     if (portal.form(form.WiFiConfig)) {
       portal.copyStr("ssid", data.ssid);
@@ -212,13 +219,13 @@ void portalCheckForm(){
       data.wifiAP = false;
       memory.updateNow();
       wifiConnect();
-
+    
     // Factory reset
     } else if(portal.form(form.factoryReset)){
-      Serial.println("Factory reset");
+      Serial.println("Factory reset"); 
       if(portal.getCheck("resetAllow"))
         factoryReset();
-
+    
     // Preferences
     } else if(portal.form(form.preferences)){
       portal.copyStr("label", data.label);
@@ -227,7 +234,7 @@ void portalCheckForm(){
       Relay1.SetInvertMode( data.relayInvertMode );
       portal.copyInt("theme", data.theme);
       memory.updateNow();
-
+      
       //MQTT Config
     } else if(portal.form(form.mqttConfig)){
       portal.copyStr("mqttServerIp", data.mqttServerIp);
@@ -254,7 +261,7 @@ void portalCheckForm(){
     portal.updateInt("switch", Relay1.GetState());
     portal.updateInt("mqttStatusLed",mqttClient.isConnected());
     String ipAdress = WiFi.localIP().toString();
-    portal.updateString("ipAddress", ipAdress);
+    portal.updateString("ipAddress", ipAdress);    
 
     uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
     portal.updateInt("wifiAPTimer", timeleftAP);
@@ -265,10 +272,10 @@ void portalCheckForm(){
 
 void portalAction(){
   portalCheckForm();
-
+    
   if (portal.click()){
     Serial.println("Portal click");
-
+   
     if (portal.click("switch")){
       Relay1.SetState( portal.getCheck("switch") );
     }
@@ -295,7 +302,7 @@ void OTAbuild(bool UpdateEnd, const String& UpdateError) {
     #else
       GP.THEME(GP_LIGHT);
     #endif
-
+    GP.PAGE_TITLE("Firmware upgrade");
     if (!UpdateEnd) {
       GP.BLOCK_TAB_BEGIN(F("Firmware upgrade"));
         GP.OTA_FIRMWARE();
@@ -306,7 +313,7 @@ void OTAbuild(bool UpdateEnd, const String& UpdateError) {
         GP.TITLE(String(F("Update error: ")) + UpdateError);
         GP.BUTTON_LINK(form.firmwareUpgrade, F("Refresh"));
       GP.BLOCK_END();
-
+        
     } else {
       GP.BLOCK_TAB_BEGIN(F("Firmware upgrade"));
         GP.TITLE(F("Update Success!"));
@@ -314,6 +321,5 @@ void OTAbuild(bool UpdateEnd, const String& UpdateError) {
       GP.BLOCK_END();
       GP.BUTTON_LINK(form.root, "Home");
     }
-
   GP.BUILD_END();
 }

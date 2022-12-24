@@ -13,7 +13,7 @@ void wifiApStaTimerHandler(){
 }
 
 void mqttStart(){
-  println("Starting MQTT");
+  println("Starting MQTT"); 
   mqttClient.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
   mqttClient.setMqttClientName(data.device_name);
     //Setup max lingth of message MQTT
@@ -36,7 +36,7 @@ void startup(){
   Relay1.SetPin(RELAY_PIN);
   Relay1.SetInvertMode(data.relayInvertMode);
   Relay1.ChangeStateCallback(ChangeRelayState);
-  if(data.relaySaveStatus){
+  if(data.relaySaveStatus){ 
       println("Restore relay state");
       Relay1.SetState(data.state); };
 
@@ -54,7 +54,7 @@ void startup(){
 
   //MQTT
   mqttStart();
-
+  
 
   //Timers
   println("Starting timers");

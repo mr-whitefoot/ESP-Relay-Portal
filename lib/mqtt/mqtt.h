@@ -76,7 +76,6 @@ void SendAvailableMessage(const String &mode = "online"){
   mqttClient.publish(data.avaibleTopic, mode, false);
 }
 
-
 void mqttPublish() {
   if (mqttClient.isConnected() && MessageTimer.tick()) {
     publishRelay();
