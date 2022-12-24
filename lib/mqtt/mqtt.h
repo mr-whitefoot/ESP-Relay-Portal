@@ -17,9 +17,9 @@ bool ToBool( String value){
 void onConnectionEstablished() {
   println("MQTT server is connected");
   SendDiscoveryMessage();
-  SendAvailableMessage();
+  SendAvailableMessage("online");
 
-  client.subscribe(data.commandTopic, [] (const String &payload)  {
+  mqttClient.subscribe(data.commandTopic, [] (const String &payload)  {
     println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
   });
@@ -33,8 +33,9 @@ void publishRelay() {
   char buffer[256];
   doc["switch"] = Relay1.GetState();
   doc["IPAddress"] = WiFi.localIP().toString();
+  doc["WiFiRSSI"] = WiFi.RSSI(); 
   serializeJson(doc, buffer);
-  client.publish(data.stateTopic, buffer, false);
+  mqttClient.publish(data.stateTopic, buffer, false);
 }
 
 void SendDiscoveryMessage( ){
@@ -60,27 +61,28 @@ void SendDiscoveryMessage( ){
   doc["val_tpl"]      = "{{ value_json.switch|default(false) }}";
 
   JsonObject device = doc.createNestedObject("device");
-  device["name"] = "ESP_Device";
+  device["name"] = data.label;
   device["model"] = "ESP_" + device_name;
   device["manufacturer"] = "whitefoot_company";
   JsonArray identifiers = device.createNestedArray("identifiers");
   identifiers.add("ESP_" + device_name);
 
   serializeJson(doc, buffer);
-  client.publish(data.discoveryTopic, buffer, true);
+  mqttClient.publish(data.discoveryTopic, buffer, true);
 }
 
-void SendAvailableMessage(){
+void SendAvailableMessage(const String &mode = "online"){
   println("MQTT publish avaible message");
-  client.publish(data.avaibleTopic, "online", false);
+  mqttClient.publish(data.avaibleTopic, mode, false);
 }
+
 
 void mqttPublish() {
-  if (client.isConnected() && MessageTimer.tick()) {
+  if (mqttClient.isConnected() && MessageTimer.tick()) {
     publishRelay();
   }
 
-  if (client.isConnected() && ServiceMessageTimer.tick()) {
+  if (mqttClient.isConnected() && ServiceMessageTimer.tick()) {
     SendAvailableMessage();
   }
 }

@@ -8,7 +8,9 @@
 #include <EEManager.h>
 #include <ESPRelay.h>
 
-String version = "2.0.0";
+String version = "2.0.1-beta.20";
+#define LIGHT_THEME 0
+#define DARK_THEME 1
 
 struct Data {
   //Data
@@ -20,6 +22,7 @@ struct Data {
   bool wifiAP;
   bool relaySaveStatus = false;
   bool state;
+  int  theme = LIGHT_THEME;
   
   // WiFi
   char ssid[32];
@@ -56,26 +59,26 @@ struct Form{
   const char* preferences = "/config/preferences";
   const char* WiFiConfig ="/config/wifi_config";
   const char* mqttConfig = "/config/mqtt_config";
-  const char* mqttTopic = "/config/mqtt_config/topic";
   const char* factoryReset = "/config/factory_reset";
   const char* firmwareUpgrade = "/ota_update";
 };
 
 Form form;
 TimerMs MessageTimer, ServiceMessageTimer, WiFiApTimer, wifiApStaTimer;
-EspMQTTClient client;
+EspMQTTClient mqttClient;
 ESPRelay Relay1;
 bool resetAllow;
 
-
 void publishRelay();
 void SendDiscoveryMessage();
-void SendAvailableMessage();
+void SendAvailableMessage(const String &mode );
 void wifiAp();
 void wifiConnect();
 void mqttPublish();
 void factoryReset();
 void ChangeRelayState();
+void mqttStart();
+void restart();
 
 
 #include <webface.h>
@@ -89,10 +92,9 @@ void setup() {
 
 void loop(){
   ArduinoOTA.handle();
-  client.loop();
+  mqttClient.loop();
   mqttPublish();
   portal.tick();
   WiFiApTimer.tick(); 
   wifiApStaTimer.tick();
-
 }
