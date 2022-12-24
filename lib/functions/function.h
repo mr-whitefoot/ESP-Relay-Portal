@@ -13,30 +13,30 @@ void wifiApStaTimerHandler(){
 }
 
 void mqttStart(){
-  println("Starting MQTT"); 
+  println("Starting MQTT");
   mqttClient.setMqttServer(data.mqttServerIp, data.mqttUsername, data.mqttPassword, data.mqttServerPort );
   mqttClient.setMqttClientName(data.device_name);
-    //Настройка максимальной длинны сообщения MQTT
+    //Setup max lingth of message MQTT
   mqttClient.setMaxPacketSize(1000);
 }
 
 void startup(){
   Serial.begin(9600);
-  //Журнал
+  //Log
   glog.start(1000);
 
   println("-------------------------------");
   println("Booting...");
   println("Initialize EEPROM");
-  EEPROM.begin(sizeof(data) + 1); // +3 на ключ
-  memory.begin(0, 'k');         // запускаем менеджер памяти
+  EEPROM.begin(sizeof(data) + 1); // +1 key
+  memory.begin(0, 'k');
 
   //Relay
   println("Initialize relay");
-  Relay1.SetPin(0);
+  Relay1.SetPin(RELAY_PIN);
   Relay1.SetInvertMode(data.relayInvertMode);
   Relay1.ChangeStateCallback(ChangeRelayState);
-  if(data.relaySaveStatus){ 
+  if(data.relaySaveStatus){
       println("Restore relay state");
       Relay1.SetState(data.state); };
 
@@ -54,9 +54,9 @@ void startup(){
 
   //MQTT
   mqttStart();
-  
 
-  //Таймеры
+
+  //Timers
   println("Starting timers");
   MessageTimer.setTime(data.status_delay*1000);
   MessageTimer.start();
@@ -81,9 +81,7 @@ void portalStart(){
   portal.enableOTA();
 }
 
-
 void wifiAp(){
-  // создаём точку доступа
   println("Create AP");
 
   String ssid = data.device_name;
@@ -113,7 +111,6 @@ void wifiAp(){
   WiFiApTimer.attach(restart);
   WiFiApTimer.start();
 }
-
 
 void wifiConnect(){
   WiFi.mode(WIFI_AP_STA);
@@ -177,6 +174,3 @@ void ChangeRelayState(){
   }
   publishRelay();
 }
-
-
-
