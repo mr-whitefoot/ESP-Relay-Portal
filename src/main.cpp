@@ -5,7 +5,7 @@
 #include <EEManager.h>
 #include <ESPRelay.h>
 
-String version = "2.1.4";
+String version = "2.1.5";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0

@@ -42,32 +42,34 @@ void startup(){
 
   // Connecting WiFi
   println("Initialize WiFi");
-  if (data.factoryReset == true || data.wifiAP == true ) wifiAp();
+  if (data.factoryReset == true || data.wifiAP == true ) {
+    wifiAp();
+  } else {
+    wifiConnect();
+  }
 
   // Enable OTA update
   println("Starting OTA updates");
   ArduinoOTA.begin();
 
-  if (data.factoryReset==false){
-    if (data.factoryReset == true || data.ssid == "" ) wifiAp();
-    else wifiConnect();
-
-  //MQTT
-  mqttStart();
+  if (data.factoryReset==false){    
+    //MQTT
+    mqttStart();
   
-
-  //Timers
-  println("Starting timers");
-  MessageTimer.setTime(data.status_delay*1000);
-  MessageTimer.start();
-  ServiceMessageTimer.setTime(data.avaible_delay*1000);
-  ServiceMessageTimer.start();
+    // MQTT timers
+    println("Starting MQTT timers");
+    MessageTimer.setTime(data.status_delay*1000);
+    MessageTimer.start();
+    ServiceMessageTimer.setTime(data.avaible_delay*1000);
+    ServiceMessageTimer.start();
+  }
+  // WiFiAP timer
+  println("Starting WiFiAP timer");
   wifiApStaTimer.setTime(WIFIAPTIMER);
   wifiApStaTimer.attach(wifiApStaTimerHandler);
 
   println("Boot complete");
   println("-------------------------------");
-  }
 }
 
 void portalStart(){
@@ -76,8 +78,7 @@ void portalStart(){
   portal.disableAuth();
   portal.attach(portalAction);
   portal.OTA.attachUpdateBuild(OTAbuild);
-  if (data.wifiAP == true ) portal.start(WIFI_AP);
-  else portal.start(data.device_name);
+  portal.start(data.device_name);
   portal.enableOTA();
 }
 
