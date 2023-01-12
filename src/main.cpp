@@ -5,7 +5,7 @@
 #include <EEManager.h>
 #include <ESPRelay.h>
 
-String version = "2.1.5";
+String version = "2.1.6";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
@@ -84,7 +84,6 @@ void setup() {
 }
 
 void loop(){
-  ArduinoOTA.handle();
   mqttClient.loop();
   mqttPublish();
   portal.tick();

@@ -48,10 +48,6 @@ void startup(){
     wifiConnect();
   }
 
-  // Enable OTA update
-  println("Starting OTA updates");
-  ArduinoOTA.begin();
-
   if (data.factoryReset==false){    
     //MQTT
     mqttStart();
