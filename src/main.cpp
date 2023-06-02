@@ -4,8 +4,14 @@
 #include <GyverPortal.h>
 #include <EEManager.h>
 #include <ESPRelay.h>
+#include <Timezone.h>
+#include <TimeLib.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
 
-String version = "2.1.4";
+
+
+String version = "2.3.1";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
@@ -21,6 +27,7 @@ struct Data {
   bool relaySaveStatus = false;
   bool state;
   int  theme = LIGHT_THEME;
+  byte timezone = 1;
   // WiFi
   char ssid[32];
   char password[32];
@@ -63,6 +70,10 @@ EspMQTTClient mqttClient;
 ESPRelay Relay1;
 bool resetAllow;
 
+// Определение NTP-клиента для получения времени
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
+
 void publishRelay();
 void SendDiscoveryMessage();
 void SendAvailableMessage(const String &mode );
@@ -73,6 +84,7 @@ void factoryReset();
 void ChangeRelayState();
 void mqttStart();
 void restart();
+int convertTimezoneToOffset();
 
 
 #include <webface.h>
@@ -90,4 +102,5 @@ void loop(){
   portal.tick();
   WiFiApTimer.tick(); 
   wifiApStaTimer.tick();
+  timeClient.update();
 }
