@@ -31,7 +31,6 @@ void publishRelay() {
   DynamicJsonDocument doc(256);
   char buffer[256];
   doc["switch"] = Relay1.GetState();
-  doc["IPAddress"] = WiFi.localIP().toString();
   doc["WiFiRSSI"] = WiFi.RSSI(); 
   serializeJson(doc, buffer);
   mqttClient.publish(data.stateTopic, buffer, false);
@@ -47,6 +46,8 @@ void SendDiscoveryMessage( ){
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
   doc["object_id"]    = "ESP_"+device_name;
+  doc["ip"]           = WiFi.localIP().toString();
+  doc["mac"]          = WiFi.macAddress();
   doc["avty_t"]       = data.avaibleTopic;
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
