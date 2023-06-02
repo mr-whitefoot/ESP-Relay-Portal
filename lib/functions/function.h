@@ -107,6 +107,15 @@ void startup(){
   }
   // WiFiAP timer
   println("Starting WiFiAP timer");
+    // MQTT timers
+    println("Starting MQTT timers");
+    MessageTimer.setTime(data.status_delay*1000);
+    MessageTimer.start();
+    ServiceMessageTimer.setTime(data.avaible_delay*1000);
+    ServiceMessageTimer.start();
+  }
+  // WiFiAP timer
+  println("Starting WiFiAP timer");
   wifiApStaTimer.setTime(WIFIAPTIMER);
   wifiApStaTimer.attach(wifiApStaTimerHandler);
 

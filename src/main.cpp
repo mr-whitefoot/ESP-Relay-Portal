@@ -96,7 +96,6 @@ void setup() {
 }
 
 void loop(){
-  ArduinoOTA.handle();
   mqttClient.loop();
   mqttPublish();
   portal.tick();
