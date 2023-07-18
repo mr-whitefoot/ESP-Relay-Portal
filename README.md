@@ -15,13 +15,16 @@ WiFi реле на ESP-01/ESP-01s.
 
 ### Интерфейс web портала:
 Главный экран<br>
-<img width="389" alt="main" src="https://user-images.githubusercontent.com/16363451/197064457-455fc27a-cce4-4100-985f-9d602ddb5188.png">
+<img width="430" alt="image" src="https://github.com/mr-whitefoot/ESP-Relay-Portal/assets/16363451/e40898e2-9f7a-4e93-8c04-41359ba0cad9">
+
+Поддержка таймеров<br>
+<img width="389" alt="main" src="https://user-images.githubusercontent.com/16363451/254378974-68468eab-a7b1-488c-91c0-90d5e21f072c.png">
 
 Выбор настроек<br>
-<img src="https://user-images.githubusercontent.com/16363451/197059246-f744cb51-43c3-43cf-b79c-b898cdecf48b.png" width="400">
+<img width="401" alt="image" src="https://github.com/mr-whitefoot/ESP-Relay-Portal/assets/16363451/f3f8e971-b77e-4998-bc1a-49f401978e52">
 
 Настройки реле<br>
-<img width="386" alt="preferences" src="https://user-images.githubusercontent.com/16363451/197064615-bbcfbd92-4fc6-41d3-a8e4-4dd3bb9980e8.png">
+<img width="389" alt="image" src="https://github.com/mr-whitefoot/ESP-Relay-Portal/assets/16363451/b9f3134a-b1c5-464a-b94d-77f0ce899cd9">
 
 Обновление прошивки по Wi-Fi<br>
 <img src="https://user-images.githubusercontent.com/16363451/197058992-d8bc1296-aa61-4ff9-ba36-1ad8a007244e.png" width="400">
