@@ -73,7 +73,7 @@ void SendDiscoveryMessage( ){
 }
 
 void SendAvailableMessage(const String &mode = "online"){
-  println("MQTT publish avaible message");
+  println("MQTT publish available message");
   mqttClient.publish(data.avaibleTopic, mode, false);
 }
 

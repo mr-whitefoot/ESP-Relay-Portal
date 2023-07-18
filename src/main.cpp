@@ -11,10 +11,29 @@
 
 
 
-String version = "2.3.1";
+String version = "2.5.10";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
+#define TIMER_COUNT 5
+
+struct Timer
+{
+  bool enable;
+  byte action;
+  byte hours;
+  byte minutes;
+  byte seconds;
+};
+
+
+
+struct Time{
+  byte timezone = 1;
+  uint32 bootTime;
+  Timer timer[TIMER_COUNT];
+};
+
 
 struct Data {
   //Data
@@ -27,7 +46,7 @@ struct Data {
   bool relaySaveStatus = false;
   bool state;
   int  theme = LIGHT_THEME;
-  byte timezone = 1;
+  Time time;
   // WiFi
   char ssid[32];
   char password[32];
@@ -56,6 +75,7 @@ WiFiEventHandler onSoftAPModeStationConnected, onSoftAPModeStationDisconnected, 
 struct Form{
   const char* root = "/";
   const char* log = "/log";
+  const char* timers = "/timers";
   const char* config = "/config";
   const char* preferences = "/config/preferences";
   const char* WiFiConfig ="/config/wifi_config";
@@ -65,7 +85,7 @@ struct Form{
 };
 
 Form form;
-TimerMs MessageTimer, ServiceMessageTimer, WiFiApTimer, wifiApStaTimer;
+TimerMs MessageTimer, ServiceMessageTimer, WiFiApTimer, wifiApStaTimer, handleTimerDelay;
 EspMQTTClient mqttClient;
 ESPRelay Relay1;
 bool resetAllow;
@@ -85,6 +105,8 @@ void ChangeRelayState();
 void mqttStart();
 void restart();
 int convertTimezoneToOffset();
+void println(const String& text);
+void print(const String& text);
 
 
 #include <webface.h>
@@ -96,10 +118,13 @@ void setup() {
 }
 
 void loop(){
+  ArduinoOTA.handle();
   mqttClient.loop();
   mqttPublish();
   portal.tick();
   WiFiApTimer.tick(); 
   wifiApStaTimer.tick();
   timeClient.update();
+  handleTimerDelay.tick();
+  
 }
