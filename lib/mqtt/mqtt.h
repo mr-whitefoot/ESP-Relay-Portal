@@ -48,6 +48,8 @@ void SendDiscoveryMessage( ){
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
   doc["object_id"]    = "ESP_"+device_name;
+  doc["ip"]           = WiFi.localIP().toString();
+  doc["mac"]          = WiFi.macAddress();
   doc["avty_t"]       = data.avaibleTopic;
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
