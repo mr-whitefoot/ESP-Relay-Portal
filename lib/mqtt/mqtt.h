@@ -32,6 +32,8 @@ void publishRelay() {
   char buffer[256];
   doc["switch"] = Relay1.GetState();
   doc["WiFiRSSI"] = WiFi.RSSI(); 
+  doc["IPAddress"] = WiFi.localIP().toString();
+
   serializeJson(doc, buffer);
   mqttClient.publish(data.stateTopic, buffer, false);
 }
@@ -46,8 +48,6 @@ void SendDiscoveryMessage( ){
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
   doc["object_id"]    = "ESP_"+device_name;
-  doc["ip"]           = WiFi.localIP().toString();
-  doc["mac"]          = WiFi.macAddress();
   doc["avty_t"]       = data.avaibleTopic;
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
@@ -62,11 +62,17 @@ void SendDiscoveryMessage( ){
 
   JsonObject device = doc.createNestedObject("device");
   device["name"] = data.label;
-  device["model"] = "ESP_" + device_name;
+  device["model"] = "ESP_" + device_name + "_hw1.0";
+  device["configuration_url"] = "http://"+WiFi.localIP().toString();
   device["manufacturer"] = "WhiteFoot company";
-  device["sw_version"]   = version;
+  device["sw_version"]   = sw_version;
+
+  //JsonArray connections = device.createNestedArray("connections");
+  //connections.add("ip,"+ WiFi.localIP().toString());
+  //connections.add("mac,"+ WiFi.macAddress());
+
   JsonArray identifiers = device.createNestedArray("identifiers");
-  identifiers.add("ESP_" + device_name);
+  identifiers.add(WiFi.macAddress());
 
   serializeJson(doc, buffer);
   mqttClient.publish(data.discoveryTopic, buffer, true);
