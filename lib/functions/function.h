@@ -108,6 +108,11 @@ void startup(){
       println("Restore relay state");
       Relay1.SetState(data.state); };
 
+  // WiFiAP timer
+  println("Starting WiFiAP timer");
+  wifiApStaTimer.setTime(WIFIAPTIMER);
+  wifiApStaTimer.attach(wifiApStaTimerHandler);
+
   // Connecting WiFi
   println("Initialize WiFi");
   if (data.factoryReset == true || data.wifiAP == true ) {
@@ -124,11 +129,6 @@ void startup(){
     //MQTT
     mqttStart();
   }
-
-  // WiFiAP timer
-  println("Starting WiFiAP timer");
-  wifiApStaTimer.setTime(WIFIAPTIMER);
-  wifiApStaTimer.attach(wifiApStaTimerHandler);
 
   //NTP 
   println("Starting NTP");
@@ -162,16 +162,6 @@ void wifiAp(){
   String ssid = data.device_name;
   ssid += "AP";
   WiFi.mode(WIFI_AP);
-  onSoftAPModeStationConnected = WiFi.onSoftAPModeStationConnected([](const WiFiEventSoftAPModeStationConnected& event)
-  {
-    portalStart();
-  });
-
-  onSoftAPModeStationDisconnected = WiFi.onSoftAPModeStationDisconnected([](const WiFiEventSoftAPModeStationDisconnected& event){
-    data.wifiAP = false;
-    memory.updateNow();
-    WiFiApTimer.stop();
-  });
 
   WiFi.softAP(ssid);
   IPAddress ip = WiFi.softAPIP();
@@ -185,10 +175,21 @@ void wifiAp(){
   WiFiApTimer.setTimerMode();
   WiFiApTimer.attach(restart);
   WiFiApTimer.start();
+
+  onSoftAPModeStationConnected = WiFi.onSoftAPModeStationConnected([](const WiFiEventSoftAPModeStationConnected& event)
+  {
+    portalStart();
+  });
+
+  onSoftAPModeStationDisconnected = WiFi.onSoftAPModeStationDisconnected([](const WiFiEventSoftAPModeStationDisconnected& event){
+    data.wifiAP = false;
+    memory.updateNow();
+    WiFiApTimer.stop();
+  });
 }
 
 void wifiConnect(){
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
   WiFi.hostname(data.device_name);
 
  onStationModeConnected = WiFi.onStationModeConnected([](const WiFiEventStationModeConnected& event)
@@ -209,7 +210,7 @@ void wifiConnect(){
       println("Resetting due to Wifi not connecting...");
 
       data.wifiConnectTry += 1;
-      if(data.wifiConnectTry == 100)
+      if(data.wifiConnectTry >= 12)
         data.wifiAP = true;
       memory.updateNow();
 

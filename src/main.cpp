@@ -11,7 +11,7 @@
 
 
 
-String sw_version = "2.5.18";
+String sw_version = "2.5.21";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
@@ -25,7 +25,6 @@ struct Timer
   byte minutes;
   byte seconds;
 };
-
 
 
 struct Time{
