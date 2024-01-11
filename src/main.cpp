@@ -11,7 +11,8 @@
 
 
 
-String sw_version = "2.5.21";
+String sw_version = "2.6.0";
+String release_date = "11.01.2024";
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0

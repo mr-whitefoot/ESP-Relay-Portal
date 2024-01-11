@@ -95,9 +95,20 @@ void portalBuild(){
         GP.BOX_END();
       GP.BLOCK_END();
 
+
       GP.BLOCK_TAB_BEGIN("Information");
-        GP.LABEL("Version: "+sw_version); GP.BREAK();
-        GP.LABEL("MAC adress: "+WiFi.macAddress()); GP.BREAK();
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("Firmware version");
+          GP.LABEL(sw_version);
+        GP.BOX_END();
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("Release date");
+          GP.LABEL(release_date);
+        GP.BOX_END();
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("MAC");
+          GP.LABEL(WiFi.macAddress());
+        GP.BOX_END();
       GP.BLOCK_END();
 
       GP.HR();
@@ -240,6 +251,10 @@ void portalBuild(){
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL("Firmware version");
           GP.LABEL(sw_version);
+        GP.BOX_END();
+        GP.BOX_BEGIN(GP_EDGES);
+          GP.LABEL("Release date");
+          GP.LABEL(release_date);
         GP.BOX_END();
         if (WiFiApTimer.active()){
           GP.BOX_BEGIN(GP_EDGES);

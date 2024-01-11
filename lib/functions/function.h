@@ -210,11 +210,11 @@ void wifiConnect(){
       println("Resetting due to Wifi not connecting...");
 
       data.wifiConnectTry += 1;
-      if(data.wifiConnectTry >= 12)
+      if(data.wifiConnectTry >= 12){
         data.wifiAP = true;
-      memory.updateNow();
-
-      restart();
+        memory.updateNow();
+        restart();
+      }
     }
   }
 

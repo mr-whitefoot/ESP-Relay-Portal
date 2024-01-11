@@ -47,7 +47,7 @@ void SendDiscoveryMessage( ){
   
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
-  doc["object_id"]    = "ESP_"+device_name;
+  doc["object_id"]    = "ESP_"+device_name+"_"+WiFi.macAddress();
   doc["ip"]           = WiFi.localIP().toString();
   doc["mac"]          = WiFi.macAddress();
   doc["avty_t"]       = data.avaibleTopic;
