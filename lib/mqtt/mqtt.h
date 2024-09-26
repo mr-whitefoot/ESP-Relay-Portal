@@ -26,6 +26,9 @@ void onConnectionEstablished() {
 }
 
 void publishRelay() {
+  if (!mqttClient.isConnected()){
+    return;
+  };
   println("MQTT publish status");
 
   DynamicJsonDocument doc(256);
