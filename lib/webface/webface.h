@@ -277,11 +277,8 @@ void portalCheckForm(){
   if (portal.form()) {
     //WiFi config
     if (portal.form(form.WiFiConfig)) {
-      String value;
-      portal.copyString( "ssid", value );
-      db[wifi::ssid]  = value;
-      portal.copyString("pass", value );
-      db[wifi::password] = value;
+      db[wifi::ssid]  = portal.getString("ssid");
+      db[wifi::password] = portal.getString("pass");
       db[wifi::forceAP] = false;
       db.update();
       restart();
@@ -295,30 +292,33 @@ void portalCheckForm(){
     // Preferences
     } else if(portal.form(form.preferences)){
       portal.copyStr("label", data.label);
-      char deviceName[32];
-      portal.copyStr("deviceName", deviceName);
-      db[keys::deviceName] = deviceName;
+      
+      db[keys::deviceName] = portal.getString("deviceName");
+
       db[keys::relayInvertMode] = portal.getCheck("relayInvertMode");
       Relay1.SetInvertMode( db[keys::relayInvertMode] );
+      
       int theme;
       portal.copyInt("theme", theme);
       db[keys::theme] = theme;
+      
       portal.copyInt("timezone", data.time.timezone);
       timeClient.setTimeOffset(convertTimezoneToOffset(data.time.timezone));
+      
       db.update();
 
       //MQTT Config
     } else if(portal.form(form.mqttConfig)){
-      portal.copyStr("mqttServerIp", db[mqtt::serverIp]);
+      db[mqtt::serverIp] = portal.getString("mqttServerIp");
       db[mqtt::serverPort] = portal.getInt("mqttServerPort");
-      portal.copyStr("mqttUsername", db[mqtt::username]);
-      portal.copyStr("mqttPassword", db[mqtt::password1]);
+      db[mqtt::username] = portal.getString("mqttUsername");
+      db[mqtt::password1] = portal.getString("mqttPassword");
       db[mqtt::avaible_delay] = portal.getInt("avaible_delay");
       db[mqtt::status_delay] = portal.getInt("status_delay");
-      portal.copyStr("discoveryTopic", db[mqtt::discoveryTopic]);
-      portal.copyStr("commandTopic", db[mqtt::commandTopic]);
-      portal.copyStr("avaibleTopic", db[mqtt::avaibleTopic]);
-      portal.copyStr("stateTopic", db[mqtt::stateTopic]);
+      db[mqtt::discoveryTopic] = portal.getString("discoveryTopic");
+      db[mqtt::commandTopic] = portal.getString("commandTopic");
+      db[mqtt::avaibleTopic] = portal.getString("avaibleTopic");
+      db[mqtt::stateTopic] = portal.getString("stateTopic");
       db.update();
       restart();
 
