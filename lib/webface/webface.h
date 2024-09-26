@@ -76,7 +76,7 @@ void portalBuild(){
       GP.HR();
       GP.BLOCK_TAB_BEGIN("Device name");
         GP.TEXT("label", "Label", data.label); GP.BREAK();
-        GP.TEXT("device_name", "Device name", db[keys::deviceName]); GP.BREAK();
+        GP.TEXT("deviceName", "Device name", db[keys::deviceName]); GP.BREAK();
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Settings");
@@ -295,7 +295,9 @@ void portalCheckForm(){
     // Preferences
     } else if(portal.form(form.preferences)){
       portal.copyStr("label", data.label);
-      portal.copyStr("device_name", db[keys::deviceName]);
+      char deviceName[32];
+      portal.copyStr("deviceName", deviceName);
+      db[keys::deviceName] = deviceName;
       db[keys::relayInvertMode] = portal.getCheck("relayInvertMode");
       Relay1.SetInvertMode( db[keys::relayInvertMode] );
       int theme;
