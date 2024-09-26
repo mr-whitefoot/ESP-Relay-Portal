@@ -19,7 +19,6 @@ GyverDBFile db(&LittleFS, "/data.db");
 
 
 #include "wifi_func.h"
-//#include "function.h"
 
 #define LIGHT_THEME 0
 #define DARK_THEME 1
@@ -49,7 +48,6 @@ enum keys : size_t {
     relayState      = SH("relayState"),
 
     theme = SH("theme"),
-
     timer = SH("timer"),
 };
 
@@ -69,7 +67,6 @@ enum mqtt : size_t {
     avaibleTopic = SH("avaibleTopic"),
     stateTopic = SH("stateTopic"),
 };
-
 
 
 struct Data {
@@ -100,7 +97,7 @@ Form form;
 TimerMs MessageTimer, ServiceMessageTimer, handleTimerDelay;
 EspMQTTClient mqttClient;
 ESPRelay Relay1;
-bool resetAllow;
+//bool resetAllow;
 
 // Определение NTP-клиента для получения времени
 WiFiUDP ntpUDP;

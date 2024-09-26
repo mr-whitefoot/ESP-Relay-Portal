@@ -201,7 +201,8 @@ void portalBuild(){
       GP.HR();
       GP.BOX_BEGIN(GP_EDGES);
         GP.LABEL("I'm really understand what I do");
-        GP.CHECK("resetAllow", resetAllow);  GP.BREAK();
+        //GP.CHECK("resetAllow", resetAllow);  GP.BREAK();
+        GP.CHECK("resetAllow");  GP.BREAK();
       GP.BOX_END();
 
       GP.HR();
