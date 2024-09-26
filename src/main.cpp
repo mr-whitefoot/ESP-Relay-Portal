@@ -13,7 +13,7 @@
 
 
 String sw_version = "3.0.0";
-String release_date = "13.08.2024";
+String release_date = "26.09.2024";
 
 GyverDBFile db(&LittleFS, "/data.db");
 
