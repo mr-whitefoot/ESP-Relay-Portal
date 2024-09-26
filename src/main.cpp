@@ -8,11 +8,19 @@
 #include <TimeLib.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <GyverDBFile.h>
+#include <LittleFS.h>
 
 
+String sw_version = "3.0.0";
+String release_date = "13.08.2024";
 
-String sw_version = "2.6.1";
-String release_date = "10.02.2024";
+GyverDBFile db(&LittleFS, "/data.db");
+
+
+#include "wifi_func.h"
+//#include "function.h"
+
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
@@ -27,48 +35,52 @@ struct Timer
   byte seconds;
 };
 
-
 struct Time{
   byte timezone = 1;
   uint32 bootTime;
   Timer timer[TIMER_COUNT];
 };
 
+enum keys : size_t {
+    deviceName = SH("deviceName"),
+    
+    relayInvertMode = SH("relayInvertMode"),
+    saveRelayStatus = SH("saveRelayStatus"),
+    relayState      = SH("relayState"),
+
+    theme = SH("theme"),
+
+    timer = SH("timer"),
+};
+
+
+enum mqtt : size_t {
+    serverIp = SH("mqttServerIp"),
+    serverPort = SH("mqttServerPort"),
+    
+    username = SH("mqttUsername"),
+    password1 = SH("mqttPassword"),
+
+    status_delay = SH("status_delay"),
+    avaible_delay = SH("avaible_delay"),
+
+    discoveryTopic = SH("discoveryTopic"),
+    commandTopic = SH("commandTopic"),
+    avaibleTopic = SH("avaibleTopic"),
+    stateTopic = SH("stateTopic"),
+};
+
+
 
 struct Data {
   //Data
   char label[32] = "Relay";
-  char device_name[32] = "relay";
-  bool relayInvertMode = false;
-  bool factoryReset = true;
-  byte wifiConnectTry = 0;
-  bool wifiAP;
-  bool relaySaveStatus = false;
-  bool state;
-  int  theme = LIGHT_THEME;
-  Time time;
-  // WiFi
-  char ssid[32];
-  char password[32];
-  //MQTT
-  char mqttServerIp[32];
-  short mqttServerPort = 1883;
-  char mqttUsername[32];
-  char mqttPassword[32];
-  //Delay before send message in seconds
-  int status_delay = 10;
-  int avaible_delay = 60;
-  //MQTT Topic
-  char discoveryTopic[100] = "homeassistant/switch/relay/config";
-  char commandTopic[100]   = "homeassistant/switch/relay/set";
-  char avaibleTopic[100]   = "homeassistant/switch/relay/avaible";
-  char stateTopic[100]     = "homeassistant/switch/relay/state";
+  Time time;  
 };
 
 #define WIFIAPTIMER 180000
 Data data;
 GyverPortal portal;
-EEManager memory(data);
 GPlog glog("log");
 WiFiEventHandler onSoftAPModeStationConnected, onSoftAPModeStationDisconnected, onStationModeConnected;
 
@@ -85,7 +97,7 @@ struct Form{
 };
 
 Form form;
-TimerMs MessageTimer, ServiceMessageTimer, WiFiApTimer, wifiApStaTimer, handleTimerDelay;
+TimerMs MessageTimer, ServiceMessageTimer, handleTimerDelay;
 EspMQTTClient mqttClient;
 ESPRelay Relay1;
 bool resetAllow;
@@ -97,14 +109,12 @@ NTPClient timeClient(ntpUDP);
 void publishRelay();
 void SendDiscoveryMessage();
 void SendAvailableMessage(const String &mode );
-void wifiAp();
-void wifiConnect();
 void mqttPublish();
 void factoryReset();
 void ChangeRelayState();
 void mqttStart();
 void restart();
-int convertTimezoneToOffset();
+int convertTimezoneToOffset(byte timezone);
 void println(const String& text);
 void print(const String& text);
 
@@ -122,8 +132,7 @@ void loop(){
   mqttClient.loop();
   mqttPublish();
   portal.tick();
-  WiFiApTimer.tick(); 
-  wifiApStaTimer.tick();
+  wifiLoop();
   timeClient.update();
   handleTimerDelay.tick();
   

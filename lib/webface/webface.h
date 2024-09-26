@@ -26,7 +26,7 @@ void portalBuild(){
   uint32_t timeleftAP = WiFiApTimer.timeLeft()/1000;
 
   GP.BUILD_BEGIN();
-  if (data.theme == LIGHT_THEME ) GP.THEME(GP_LIGHT);
+  if (db[keys::theme] == LIGHT_THEME ) GP.THEME(GP_LIGHT);
   else GP.THEME(GP_DARK);
 
   // Update components
@@ -76,18 +76,18 @@ void portalBuild(){
       GP.HR();
       GP.BLOCK_TAB_BEGIN("Device name");
         GP.TEXT("label", "Label", data.label); GP.BREAK();
-        GP.TEXT("device_name", "Device name", data.device_name); GP.BREAK();
+        GP.TEXT("device_name", "Device name", db[keys::deviceName]); GP.BREAK();
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Settings");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Theme");   GP.SELECT("theme", "Light,Dark", data.theme);
+          GP.LABEL("Theme");   GP.SELECT("theme", "Light,Dark", db[keys::theme]);
         GP.BOX_END();
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Relay invert mode"); GP.SWITCH("relayInvertMode", data.relayInvertMode);
+          GP.LABEL("Relay invert mode"); GP.SWITCH("relayInvertMode", db[keys::relayInvertMode]);
         GP.BOX_END();
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL("Save relay status"); GP.SWITCH("relaySaveStatus", data.relaySaveStatus);
+          GP.LABEL("Save relay status"); GP.SWITCH("relaySaveStatus", db[keys::saveRelayStatus]);
         GP.BOX_END();
         GP.BOX_BEGIN(GP_EDGES);
           GP.LABEL("Timezone"); 
@@ -143,8 +143,8 @@ void portalBuild(){
         GP.BLOCK_END();
 
         GP.BLOCK_TAB_BEGIN("Settings");
-          GP.TEXT("ssid", "SSID", data.ssid);GP.BREAK();
-          GP.PASS("pass", "Password", data.password);GP.BREAK();
+          GP.TEXT("ssid", "SSID", db[wifi::ssid]);GP.BREAK();
+          GP.PASS("pass", "Password", db[wifi::password]);GP.BREAK();
         GP.BLOCK_END();
 
         GP.HR();
@@ -166,26 +166,26 @@ void portalBuild(){
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("Server");
-        GP.TEXT("mqttServerIp", "Server", data.mqttServerIp); GP.BREAK();
-        GP.NUMBER("mqttServerPort", "Port", data.mqttServerPort); GP.BREAK();
-        GP.TEXT("mqttUsername", "Username", data.mqttUsername); GP.BREAK();
-        GP.PASS("mqttPassword", "Password", data.mqttPassword); GP.BREAK();
+        GP.TEXT("mqttServerIp", "Server", db[mqtt::serverIp]); GP.BREAK();
+        GP.NUMBER("mqttServerPort", "Port", db[mqtt::serverPort]); GP.BREAK();
+        GP.TEXT("mqttUsername", "Username", db[mqtt::username]); GP.BREAK();
+        GP.PASS("mqttPassword", "Password", db[mqtt::password1]); GP.BREAK();
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("MQTT Message periods");
-        GP.NUMBER("avaible_delay", "Avaible", data.avaible_delay); GP.BREAK();
-        GP.NUMBER("status_delay", "Message", data.status_delay); GP.BREAK();
+        GP.NUMBER("avaible_delay", "Avaible", db[mqtt::avaible_delay]); GP.BREAK();
+        GP.NUMBER("status_delay", "Message", db[mqtt::status_delay]); GP.BREAK();
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("MQTT topics");
         GP.LABEL("Discovery topic"); GP.BREAK();
-        GP.TEXT("discoveryTopic", "Discovery topic", data.discoveryTopic); GP.BREAK();
+        GP.TEXT("discoveryTopic", "Discovery topic", db[mqtt::discoveryTopic]); GP.BREAK();
         GP.LABEL("Command topic"); GP.BREAK();
-        GP.TEXT("commandTopic", "Command topic", data.commandTopic); GP.BREAK();
+        GP.TEXT("commandTopic", "Command topic", db[mqtt::commandTopic]); GP.BREAK();
         GP.LABEL("Avaible topic"); GP.BREAK();
-        GP.TEXT("avaibleTopic", "Avaible topic", data.avaibleTopic); GP.BREAK();
+        GP.TEXT("avaibleTopic", "Avaible topic", db[mqtt::avaibleTopic]); GP.BREAK();
         GP.LABEL("State topic"); GP.BREAK();
-        GP.TEXT("stateTopic", "State topic", data.stateTopic); GP.BREAK();
+        GP.TEXT("stateTopic", "State topic", db[mqtt::stateTopic]); GP.BREAK();
       GP.BLOCK_END();
 
       GP.HR();
@@ -276,12 +276,14 @@ void portalCheckForm(){
   if (portal.form()) {
     //WiFi config
     if (portal.form(form.WiFiConfig)) {
-      portal.copyStr("ssid", data.ssid);
-      portal.copyStr("pass", data.password);
-      data.factoryReset = false;
-      data.wifiAP = false;
-      memory.updateNow();
-      wifiConnect();
+      String value;
+      portal.copyString( "ssid", value );
+      db[wifi::ssid]  = value;
+      portal.copyString("pass", value );
+      db[wifi::password] = value;
+      db[wifi::forceAP] = false;
+      db.update();
+      restart();
 
     // Factory reset
     } else if(portal.form(form.factoryReset)){
@@ -292,33 +294,36 @@ void portalCheckForm(){
     // Preferences
     } else if(portal.form(form.preferences)){
       portal.copyStr("label", data.label);
-      portal.copyStr("device_name", data.device_name);
-      data.relayInvertMode = portal.getCheck("relayInvertMode");
-      Relay1.SetInvertMode( data.relayInvertMode );
-      portal.copyInt("theme", data.theme);
+      portal.copyStr("device_name", db[keys::deviceName]);
+      db[keys::relayInvertMode] = portal.getCheck("relayInvertMode");
+      Relay1.SetInvertMode( db[keys::relayInvertMode] );
+      int theme;
+      portal.copyInt("theme", theme);
+      db[keys::theme] = theme;
       portal.copyInt("timezone", data.time.timezone);
-      timeClient.setTimeOffset(convertTimezoneToOffset());
-      memory.updateNow();
+      timeClient.setTimeOffset(convertTimezoneToOffset(data.time.timezone));
+      db.update();
 
       //MQTT Config
     } else if(portal.form(form.mqttConfig)){
-      portal.copyStr("mqttServerIp", data.mqttServerIp);
-      data.mqttServerPort = portal.getInt("mqttServerPort");
-      portal.copyStr("mqttUsername", data.mqttUsername);
-      portal.copyStr("mqttPassword", data.mqttPassword);
-      data.avaible_delay = portal.getInt("avaible_delay");
-      data.status_delay = portal.getInt("status_delay");
-      portal.copyStr("discoveryTopic", data.discoveryTopic);
-      portal.copyStr("commandTopic", data.commandTopic);
-      portal.copyStr("avaibleTopic", data.avaibleTopic);
-      portal.copyStr("stateTopic", data.stateTopic);
-      memory.updateNow();
+      portal.copyStr("mqttServerIp", db[mqtt::serverIp]);
+      db[mqtt::serverPort] = portal.getInt("mqttServerPort");
+      portal.copyStr("mqttUsername", db[mqtt::username]);
+      portal.copyStr("mqttPassword", db[mqtt::password1]);
+      db[mqtt::avaible_delay] = portal.getInt("avaible_delay");
+      db[mqtt::status_delay] = portal.getInt("status_delay");
+      portal.copyStr("discoveryTopic", db[mqtt::discoveryTopic]);
+      portal.copyStr("commandTopic", db[mqtt::commandTopic]);
+      portal.copyStr("avaibleTopic", db[mqtt::avaibleTopic]);
+      portal.copyStr("stateTopic", db[mqtt::stateTopic]);
+      db.update();
       restart();
 
       //Timers
     } else if(portal.form(form.timers)){
         for(int i=0; i < TIMER_COUNT; i++){ copyTimer(i); };
-        memory.updateNow();
+        db[keys::timer] = data.time;
+        db.update();
     }
   }
 
@@ -351,13 +356,13 @@ void portalAction(){
 
     if (portal.click("switch")){ Relay1.SetState( portal.getCheck("switch") ); }
     if (portal.click("relayInverMode")){
-      data.relayInvertMode = portal.getCheck("relayInverMode");
-      Relay1.SetInvertMode( data.relayInvertMode );
-      memory.updateNow();
+      db[keys::relayInvertMode] = portal.getCheck("relayInverMode");
+      Relay1.SetInvertMode( db[keys::relayInvertMode] );
+      db.update();
     }
     if (portal.click("relaySaveStatus")){
-      data.relaySaveStatus = portal.getCheck("relaySaveStatus");
-      memory.updateNow();
+      db[keys::saveRelayStatus] = portal.getCheck("relaySaveStatus");
+      db.update();
     }
     if (portal.click("rebootButton")){ restart(); }
   }

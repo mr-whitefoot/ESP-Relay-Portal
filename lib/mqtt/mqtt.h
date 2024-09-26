@@ -19,7 +19,7 @@ void onConnectionEstablished() {
   SendDiscoveryMessage();
   SendAvailableMessage("online");
 
-  mqttClient.subscribe(data.commandTopic, [] (const String &payload)  {
+  mqttClient.subscribe(db[mqtt::commandTopic], [] (const String &payload)  {
     println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
   });
@@ -35,7 +35,7 @@ void publishRelay() {
   doc["IPAddress"] = WiFi.localIP().toString();
 
   serializeJson(doc, buffer);
-  mqttClient.publish(data.stateTopic, buffer, false);
+  mqttClient.publish(db[mqtt::stateTopic], buffer, false);
 }
 
 void SendDiscoveryMessage( ){
@@ -43,20 +43,20 @@ void SendDiscoveryMessage( ){
   DynamicJsonDocument doc(1024);
   char buffer[1024];
 
-  String device_name = data.device_name;
+  String device_name = db[keys::deviceName];
   
   doc["name"]         = data.label;
   doc["uniq_id"]      = "ESP_"+device_name;
   doc["object_id"]    = "ESP_"+device_name+"_"+WiFi.macAddress();
   doc["ip"]           = WiFi.localIP().toString();
   doc["mac"]          = WiFi.macAddress();
-  doc["avty_t"]       = data.avaibleTopic;
+  doc["avty_t"]       = db[mqtt::avaibleTopic];
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
-  doc["stat_t"]       = data.stateTopic;
+  doc["stat_t"]       = db[mqtt::stateTopic];
   doc["stat_on"]      = true;
   doc["stat_off"]     = false;
-  doc["cmd_t"]        = data.commandTopic;
+  doc["cmd_t"]        = db[mqtt::commandTopic];
   doc["pl_on"]        = true;
   doc["pl_off"]       = false;
   doc["dev_cla"]      = "switch";
@@ -77,12 +77,12 @@ void SendDiscoveryMessage( ){
   identifiers.add(WiFi.macAddress());
 
   serializeJson(doc, buffer);
-  mqttClient.publish(data.discoveryTopic, buffer, true);
+  mqttClient.publish(db[mqtt::discoveryTopic], buffer, true);
 }
 
 void SendAvailableMessage(const String &mode = "online"){
   println("MQTT publish available message");
-  mqttClient.publish(data.avaibleTopic, mode, false);
+  mqttClient.publish(db[mqtt::avaibleTopic], mode, false);
 }
 
 void mqttPublish() {
