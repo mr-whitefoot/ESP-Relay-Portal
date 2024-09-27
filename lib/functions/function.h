@@ -108,8 +108,10 @@ void dbSetup(){
   db.init(mqtt::status_delay, 10);
   db.init(mqtt::avaible_delay, 60);
 
-  db.dump(Serial);
-  println(" ");
+  #ifdef DEBUG_DB
+    db.dump(Serial);
+    println(" ");
+  #endif
 }
 
 

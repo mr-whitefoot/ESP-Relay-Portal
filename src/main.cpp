@@ -12,8 +12,12 @@
 #include <LittleFS.h>
 
 
-String sw_version = "3.0.1";
-String release_date = "27.09.2024";
+//#define DEBUG_MQTT
+#define DEBUG_DB
+
+
+String sw_version = "3.0.2";
+String release_date = "28.09.2024";
 
 GyverDBFile db(&LittleFS, "/data.db");
 
@@ -24,7 +28,8 @@ GyverDBFile db(&LittleFS, "/data.db");
 #define DARK_THEME 1
 #define RELAY_PIN 0
 #define TIMER_COUNT 5
-//#define DEBUG
+
+
 
 struct Timer
 {
@@ -36,8 +41,6 @@ struct Timer
 };
 
 struct Time{
-  byte timezone = 1;
-  uint32 bootTime;
   Timer timer[TIMER_COUNT];
 };
 

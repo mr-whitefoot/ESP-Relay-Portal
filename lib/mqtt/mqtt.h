@@ -17,7 +17,7 @@ bool ToBool( String value){
 void mqttStart(){
   println("Starting MQTT"); 
 
-  #ifdef DEBUG
+  #ifdef DEBUG_MQTT
     mqttClient.enableDebuggingMessages();
   #endif  
 
