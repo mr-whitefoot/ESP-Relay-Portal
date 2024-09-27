@@ -9,23 +9,7 @@ void print(const String& text){
 }
 
 
-void mqttStart(){
-  println("Starting MQTT"); 
-  mqttClient.setMqttServer(db[mqtt::serverIp].toString().c_str(), 
-                           db[mqtt::username].toString().c_str(), 
-                           db[mqtt::password1].toString().c_str(), 
-                           db[mqtt::serverPort] );
-  String deviceName = db[keys::deviceName];
-  mqttClient.setMqttClientName(deviceName.c_str());
-  //Setup max lingth of message MQTT
-  mqttClient.setMaxPacketSize(1000);
-  // MQTT timers
-  println("Starting MQTT timers");
-  MessageTimer.setTime(db[mqtt::status_delay].toInt()*1000);
-  MessageTimer.start();
-  ServiceMessageTimer.setTime(db[mqtt::avaible_delay].toInt()*1000);
-  ServiceMessageTimer.start();
-}
+
 
 int convertTimezoneToOffset(byte timezone){
   if(timezone == 1 ) return -43200; //-12:00 
@@ -128,7 +112,7 @@ void dbSetup(){
 
 
 void startup(){
-  Serial.begin(115200);
+  Serial.begin(74880);
   //Log
   glog.start(1000);
 

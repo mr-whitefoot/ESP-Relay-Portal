@@ -14,6 +14,31 @@ bool ToBool( String value){
   return false;
 }
 
+void mqttStart(){
+  println("Starting MQTT"); 
+
+  #ifdef DEBUG
+    mqttClient.enableDebuggingMessages();
+  #endif  
+
+  mqttClient.setMqttServer( db[mqtt::serverIp].c_str(), 
+                            db[mqtt::username].c_str(), 
+                            db[mqtt::password1].c_str(),
+                            db[mqtt::serverPort] 
+                           );
+  mqttClient.setMqttClientName(db[keys::deviceName].c_str());
+  //Setup max lingth of message MQTT
+  mqttClient.setMaxPacketSize(1000);
+
+  // MQTT timers
+  println("Starting MQTT timers");
+  MessageTimer.setTime(db[mqtt::status_delay].toInt()*1000);
+  MessageTimer.start();
+  ServiceMessageTimer.setTime(db[mqtt::avaible_delay].toInt()*1000);
+  ServiceMessageTimer.start();
+}
+
+
 void onConnectionEstablished() {
   println("MQTT server is connected");
   SendDiscoveryMessage();

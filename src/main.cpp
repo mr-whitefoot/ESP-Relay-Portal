@@ -12,8 +12,8 @@
 #include <LittleFS.h>
 
 
-String sw_version = "3.0.0";
-String release_date = "26.09.2024";
+String sw_version = "3.0.1";
+String release_date = "27.09.2024";
 
 GyverDBFile db(&LittleFS, "/data.db");
 
@@ -24,6 +24,7 @@ GyverDBFile db(&LittleFS, "/data.db");
 #define DARK_THEME 1
 #define RELAY_PIN 0
 #define TIMER_COUNT 5
+//#define DEBUG
 
 struct Timer
 {
@@ -46,6 +47,7 @@ enum keys : size_t {
     relayInvertMode = SH("relayInvertMode"),
     saveRelayStatus = SH("saveRelayStatus"),
     relayState      = SH("relayState"),
+    timezone        = SH("timezone"),
 
     theme = SH("theme"),
     timer = SH("timer"),
@@ -132,5 +134,4 @@ void loop(){
   wifiLoop();
   timeClient.update();
   handleTimerDelay.tick();
-  
 }
