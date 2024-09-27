@@ -109,7 +109,7 @@ void dbSetup(){
   db.init(mqtt::avaible_delay, 60);
 
   db.dump(Serial);
-  println();
+  println(" ");
 }
 
 
@@ -118,7 +118,7 @@ void startup(){
   //Log
   glog.start(1000);
 
-  println();println();println();
+  println("");println("");println("");
   println("-------------------------------");
   println("Booting...");
   
