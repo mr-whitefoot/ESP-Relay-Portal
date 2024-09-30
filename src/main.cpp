@@ -2,7 +2,6 @@
 #include <ArduinoJson.h>
 #include <TimerMs.h>
 #include <GyverPortal.h>
-#include <EEManager.h>
 #include <ESPRelay.h>
 #include <Timezone.h>
 #include <TimeLib.h>
@@ -22,7 +21,7 @@ String release_date = "28.09.2024";
 GyverDBFile db(&LittleFS, "/data.db");
 
 
-#include "wifi_func.h"
+#include <wifi_func.h>
 
 #define LIGHT_THEME 0
 #define DARK_THEME 1
