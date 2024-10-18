@@ -100,10 +100,13 @@ void dbSetup(){
   db.init(keys::theme, LIGHT_THEME);
   db.init(keys::timezone, 14);
 
+  db.init(mqtt::topicPrefix, "homeassistant");
+  /*
   db.init(mqtt::discoveryTopic, "homeassistant/switch/relay/config");
   db.init(mqtt::commandTopic, "homeassistant/switch/relay/set");
   db.init(mqtt::avaibleTopic, "homeassistant/switch/relay/avaible");
   db.init(mqtt::stateTopic, "homeassistant/switch/relay/state");
+  */
   db.init(mqtt::serverPort, 1883 );
   db.init(mqtt::status_delay, 10);
   db.init(mqtt::avaible_delay, 60);

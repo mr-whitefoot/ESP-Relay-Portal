@@ -1,3 +1,39 @@
+struct MQTTData{
+  String discoveryTopic;
+  String commandTopic;
+  String avaibleTopic;
+  String stateTopic;
+};
+
+MQTTData mqttData;
+
+void topicCreate(){
+  String topicPrefix = db[mqtt::topicPrefix];
+  String deviceName = db[keys::deviceName];
+
+  mqttData.discoveryTopic = topicPrefix + "/switch/" + deviceName + "/config";
+  mqttData.avaibleTopic = topicPrefix + "/switch/" + deviceName + "/avaible";
+  mqttData.stateTopic = topicPrefix + "/switch/" + deviceName + "/state";
+  mqttData.commandTopic = topicPrefix + "/switch/" + deviceName + "/set";
+}
+
+const String getDiscoveryTopic(){
+  return mqttData.discoveryTopic;
+}
+
+const String getCommandTopic(){
+  return mqttData.commandTopic;
+}
+
+const String getAvaibleTopic(){
+  return mqttData.avaibleTopic;
+}
+
+const String getStateTopic(){
+  return mqttData.stateTopic;
+}
+
+
 bool ToBool( String value){
   if ( (value == "true" )||
        (value == "True" )||
@@ -44,7 +80,7 @@ void onConnectionEstablished() {
   SendDiscoveryMessage();
   SendAvailableMessage("online");
 
-  mqttClient.subscribe(db[mqtt::commandTopic], [] (const String &payload)  {
+  mqttClient.subscribe(getCommandTopic(), [] (const String &payload)  {
     println("MQTT received command topic"); 
     Relay1.SetState( ToBool(payload));
   });
@@ -63,7 +99,7 @@ void publishRelay() {
   doc["IPAddress"] = WiFi.localIP().toString();
 
   serializeJson(doc, buffer);
-  mqttClient.publish(db[mqtt::stateTopic], buffer, false);
+  mqttClient.publish(getStateTopic(), buffer, false);
 }
 
 void SendDiscoveryMessage( ){
@@ -79,13 +115,13 @@ void SendDiscoveryMessage( ){
   doc["object_id"]    = "ESP_"+device_name+"_"+WiFi.macAddress();
   doc["ip"]           = WiFi.localIP().toString();
   doc["mac"]          = WiFi.macAddress();
-  doc["avty_t"]       = db[mqtt::avaibleTopic];
+  doc["avty_t"]       = getAvaibleTopic();
   doc["pl_avail"]     = "online";
   doc["pl_not_avail"] = "offline";
-  doc["stat_t"]       = db[mqtt::stateTopic];
+  doc["stat_t"]       = getStateTopic();
   doc["stat_on"]      = true;
   doc["stat_off"]     = false;
-  doc["cmd_t"]        = db[mqtt::commandTopic];
+  doc["cmd_t"]        = getCommandTopic();
   doc["pl_on"]        = true;
   doc["pl_off"]       = false;
   doc["dev_cla"]      = "switch";
@@ -106,12 +142,12 @@ void SendDiscoveryMessage( ){
   identifiers.add(WiFi.macAddress());
 
   serializeJson(doc, buffer);
-  mqttClient.publish(db[mqtt::discoveryTopic], buffer, true);
+  mqttClient.publish(getDiscoveryTopic(), buffer, true);
 }
 
 void SendAvailableMessage(const String &mode = "online"){
   println("MQTT publish available message");
-  mqttClient.publish(db[mqtt::avaibleTopic], mode, false);
+  mqttClient.publish(getAvaibleTopic(), mode, false);
 }
 
 void mqttPublish() {

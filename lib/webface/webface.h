@@ -177,14 +177,17 @@ void portalBuild(){
       GP.BLOCK_END();
 
       GP.BLOCK_TAB_BEGIN("MQTT topics");
-        GP.LABEL("Discovery topic"); GP.BREAK();
+        GP.LABEL("Topic prefix"); GP.BREAK();
+        GP.TEXT("topicPrefix", "Topic prefix", db[mqtt::topicPrefix]); GP.BREAK();
+
+        /*GP.LABEL("Discovery topic"); GP.BREAK();
         GP.TEXT("discoveryTopic", "Discovery topic", db[mqtt::discoveryTopic]); GP.BREAK();
         GP.LABEL("Command topic"); GP.BREAK();
         GP.TEXT("commandTopic", "Command topic", db[mqtt::commandTopic]); GP.BREAK();
         GP.LABEL("Avaible topic"); GP.BREAK();
         GP.TEXT("avaibleTopic", "Avaible topic", db[mqtt::avaibleTopic]); GP.BREAK();
         GP.LABEL("State topic"); GP.BREAK();
-        GP.TEXT("stateTopic", "State topic", db[mqtt::stateTopic]); GP.BREAK();
+        GP.TEXT("stateTopic", "State topic", db[mqtt::stateTopic]); GP.BREAK();*/
       GP.BLOCK_END();
 
       GP.HR();
@@ -307,10 +310,13 @@ void portalCheckForm(){
       db[mqtt::password1] = portal.getString("mqttPassword");
       db[mqtt::avaible_delay] = portal.getInt("avaible_delay");
       db[mqtt::status_delay] = portal.getInt("status_delay");
+      db[mqtt::topicPrefix] = portal.getString("topicPrefix");
+      /*
       db[mqtt::discoveryTopic] = portal.getString("discoveryTopic");
       db[mqtt::commandTopic] = portal.getString("commandTopic");
       db[mqtt::avaibleTopic] = portal.getString("avaibleTopic");
       db[mqtt::stateTopic] = portal.getString("stateTopic");
+      */
       db.update();
       restart();
 

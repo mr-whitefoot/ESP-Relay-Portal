@@ -15,7 +15,7 @@
 #define DEBUG_DB
 
 
-String sw_version = "3.0.3";
+String sw_version = "3.0.5";
 String release_date = "18.10.2024";
 
 GyverDBFile db(&LittleFS, "/data.db");
@@ -66,10 +66,11 @@ enum mqtt : size_t {
     status_delay = SH("status_delay"),
     avaible_delay = SH("avaible_delay"),
 
-    discoveryTopic = SH("discoveryTopic"),
+    topicPrefix = SH("topicPrefix"),
+   /* discoveryTopic = SH("discoveryTopic"),
     commandTopic = SH("commandTopic"),
     avaibleTopic = SH("avaibleTopic"),
-    stateTopic = SH("stateTopic"),
+    stateTopic = SH("stateTopic"),*/
 };
 
 
