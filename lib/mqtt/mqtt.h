@@ -72,9 +72,10 @@ void SendDiscoveryMessage( ){
   char buffer[1024];
 
   String device_name = db[keys::deviceName];
-  
-  doc["name"]         = data.label;
-  doc["uniq_id"]      = "ESP_"+device_name;
+  uint32_t chipId = ESP.getChipId();
+
+  doc["name"]         = device_name;
+  doc["uniq_id"]      = chipId;
   doc["object_id"]    = "ESP_"+device_name+"_"+WiFi.macAddress();
   doc["ip"]           = WiFi.localIP().toString();
   doc["mac"]          = WiFi.macAddress();
@@ -91,7 +92,7 @@ void SendDiscoveryMessage( ){
   doc["val_tpl"]      = "{{ value_json.switch|default(false) }}";
 
   JsonObject device = doc.createNestedObject("device");
-  device["name"] = data.label;
+  device["name"] = device_name;
   device["model"] = "ESP_" + device_name + "_hw1.0";
   device["configuration_url"] = "http://"+WiFi.localIP().toString();
   device["manufacturer"] = "WhiteFoot company";

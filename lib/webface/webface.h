@@ -75,7 +75,6 @@ void portalBuild(){
       GP.TITLE("Preferences");
       GP.HR();
       GP.BLOCK_TAB_BEGIN("Device name");
-        GP.TEXT("label", "Label", data.label); GP.BREAK();
         GP.TEXT("deviceName", "Device name", db[keys::deviceName]); GP.BREAK();
       GP.BLOCK_END();
 
@@ -216,7 +215,7 @@ void portalBuild(){
     GP.FORM_BEGIN(form.root);
        GP.BLOCK_TAB_BEGIN("Control");
         GP.BOX_BEGIN(GP_EDGES);
-          GP.LABEL( data.label ); GP.SWITCH("switch", Relay1.GetState());
+          GP.LABEL( db[keys::deviceName] ); GP.SWITCH("switch", Relay1.GetState());
         GP.BOX_END();
       GP.BLOCK_END();
 
@@ -291,15 +290,10 @@ void portalCheckForm(){
 
     // Preferences
     } else if(portal.form(form.preferences)){
-      portal.copyStr("label", data.label);
-      
       db[keys::deviceName] = portal.getString("deviceName");
-
       db[keys::relayInvertMode] = portal.getCheck("relayInvertMode");
       Relay1.SetInvertMode( db[keys::relayInvertMode] );
-      
       db[keys::theme] = portal.getInt("theme");
-      
       db[keys::timezone] = portal.getInt("timezone");
       timeClient.setTimeOffset(convertTimezoneToOffset(db[keys::timezone]));
       
