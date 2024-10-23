@@ -11,12 +11,12 @@
 #include <LittleFS.h>
 
 
-//#define DEBUG_MQTT
+#define DEBUG_MQTT
 #define DEBUG_DB
 
 
-String sw_version = "3.0.5";
-String release_date = "18.10.2024";
+String sw_version = "3.0.6";
+String release_date = "23.10.2024";
 
 GyverDBFile db(&LittleFS, "/data.db");
 

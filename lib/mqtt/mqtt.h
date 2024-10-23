@@ -15,6 +15,14 @@ void topicCreate(){
   mqttData.avaibleTopic = topicPrefix + "/switch/" + deviceName + "/avaible";
   mqttData.stateTopic = topicPrefix + "/switch/" + deviceName + "/state";
   mqttData.commandTopic = topicPrefix + "/switch/" + deviceName + "/set";
+
+  #ifdef DEBUG_MQTT
+    println("MQTT discovery topic: "+ mqttData.discoveryTopic );
+    println("MQTT avaible topic: "+ mqttData.avaibleTopic );
+    println("MQTT state topic: "+ mqttData.stateTopic );
+    println("MQTT command topic: "+ mqttData.commandTopic );
+  #endif  
+
 }
 
 const String getDiscoveryTopic(){
@@ -57,6 +65,9 @@ void mqttStart(){
     mqttClient.enableDebuggingMessages();
   #endif  
 
+  //Create topics
+  topicCreate();
+
   mqttClient.setMqttServer( db[mqtt::serverIp].c_str(), 
                             db[mqtt::username].c_str(), 
                             db[mqtt::password1].c_str(),
@@ -64,7 +75,7 @@ void mqttStart(){
                            );
   mqttClient.setMqttClientName(db[keys::deviceName].c_str());
   //Setup max lingth of message MQTT
-  mqttClient.setMaxPacketSize(1000);
+  mqttClient.setMaxPacketSize(2048);
 
   // MQTT timers
   println("Starting MQTT timers");
@@ -90,8 +101,9 @@ void publishRelay() {
   if (!mqttClient.isConnected()){
     return;
   };
-  println("MQTT publish status");
-
+  #ifdef DEBUG_MQTT
+    println("MQTT publish status");
+  #endif
   DynamicJsonDocument doc(256);
   char buffer[256];
   doc["switch"] = Relay1.GetState();
@@ -103,7 +115,9 @@ void publishRelay() {
 }
 
 void SendDiscoveryMessage( ){
-  println("MQTT publish discovery message");
+  #ifdef DEBUG_MQTT
+    println("MQTT publish discovery message");
+  #endif
   DynamicJsonDocument doc(1024);
   char buffer[1024];
 
@@ -146,7 +160,9 @@ void SendDiscoveryMessage( ){
 }
 
 void SendAvailableMessage(const String &mode = "online"){
-  println("MQTT publish available message");
+  #ifdef DEBUG_MQTT
+    println("MQTT publish available message");
+  #endif
   mqttClient.publish(getAvaibleTopic(), mode, false);
 }
 
