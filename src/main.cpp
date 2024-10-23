@@ -11,8 +11,8 @@
 #include <LittleFS.h>
 
 
-#define DEBUG_MQTT
-#define DEBUG_DB
+//#define DEBUG_MQTT
+//#define DEBUG_DB
 
 
 String sw_version = "3.0.6";
