@@ -12,6 +12,7 @@ void createTimerUi(const int index){
   GP.BLOCK_END();
 }
 
+
 void copyTimer( const int index){
    portal.copyBool("timerEnable"+String(index),data.time.timer[index].enable);
    portal.copyInt("timerAction"+String(index),data.time.timer[index].action);
@@ -19,7 +20,6 @@ void copyTimer( const int index){
    portal.copyInt("timerMinutes"+String(index),data.time.timer[index].minutes);
    portal.copyInt("timerSeconds"+String(index),data.time.timer[index].seconds);
 }
-
 
 
 void portalBuild(){
@@ -275,6 +275,7 @@ void portalBuild(){
   GP.BUILD_END();
 }
 
+
 void portalCheckForm(){
   if (portal.form()) {
     //WiFi config
@@ -311,12 +312,7 @@ void portalCheckForm(){
       db[mqtt::avaible_delay] = portal.getInt("avaible_delay");
       db[mqtt::status_delay] = portal.getInt("status_delay");
       db[mqtt::topicPrefix] = portal.getString("topicPrefix");
-      /*
-      db[mqtt::discoveryTopic] = portal.getString("discoveryTopic");
-      db[mqtt::commandTopic] = portal.getString("commandTopic");
-      db[mqtt::avaibleTopic] = portal.getString("avaibleTopic");
-      db[mqtt::stateTopic] = portal.getString("stateTopic");
-      */
+
       db.update();
       restart();
 
@@ -349,6 +345,7 @@ void portalCheckForm(){
   }
 }
 
+
 void portalAction(){
   portalCheckForm();
 
@@ -368,6 +365,7 @@ void portalAction(){
     if (portal.click("rebootButton")){ restart(); }
   }
 }
+
 
 //Custom OTA page
 void OTAbuild(bool UpdateEnd, const String& UpdateError) {

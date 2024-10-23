@@ -3,12 +3,11 @@ void println(const String& text){
   glog.println(text);
 }
 
+
 void print(const String& text){
   Serial.print(text);
   glog.print(text);
 }
-
-
 
 
 int convertTimezoneToOffset(byte timezone){
@@ -73,6 +72,7 @@ void timerHandle(){
   }
 }
 
+
 void portalStart(){
   println("Starting portal");
   portal.attachBuild(portalBuild);
@@ -82,7 +82,6 @@ void portalStart(){
   portal.start(db[keys::deviceName].toString().c_str());
   portal.enableOTA();
 }
-
 
 
 void dbSetup(){
@@ -101,12 +100,6 @@ void dbSetup(){
   db.init(keys::timezone, 14);
 
   db.init(mqtt::topicPrefix, "homeassistant");
-  /*
-  db.init(mqtt::discoveryTopic, "homeassistant/switch/relay/config");
-  db.init(mqtt::commandTopic, "homeassistant/switch/relay/set");
-  db.init(mqtt::avaibleTopic, "homeassistant/switch/relay/avaible");
-  db.init(mqtt::stateTopic, "homeassistant/switch/relay/state");
-  */
   db.init(mqtt::serverPort, 1883 );
   db.init(mqtt::status_delay, 10);
   db.init(mqtt::avaible_delay, 60);
@@ -130,7 +123,6 @@ void startup(){
   //Database
   dbSetup();
   
-
   //Relay
   println("Initialize relay");
   Relay1.SetPin(RELAY_PIN);
@@ -143,7 +135,6 @@ void startup(){
   // WiFi
   wifiSetup(db[keys::deviceName], &db);
   
-
   // Enable OTA update
   println("Starting OTA updates");
   ArduinoOTA.begin();
@@ -164,13 +155,12 @@ void startup(){
   handleTimerDelay.attach(timerHandle);
   handleTimerDelay.start();
 
-
   portalStart();
-
 
   println("Boot complete");
   println("-------------------------------");
 }
+
 
 void factoryReset(){
   println("Factory reset");
@@ -178,6 +168,7 @@ void factoryReset(){
   db.update();
   restart();
 }
+
 
 void restart(){
   println("Rebooting...");
@@ -188,6 +179,7 @@ void restart(){
   db.update();
   ESP.restart();
 }
+
 
 void ChangeRelayState(){
   println("Change relay state triggered");

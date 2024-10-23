@@ -5,7 +5,9 @@ struct MQTTData{
   String stateTopic;
 };
 
+
 MQTTData mqttData;
+
 
 void topicCreate(){
   String topicPrefix = db[mqtt::topicPrefix];
@@ -25,17 +27,21 @@ void topicCreate(){
 
 }
 
+
 const String getDiscoveryTopic(){
   return mqttData.discoveryTopic;
 }
+
 
 const String getCommandTopic(){
   return mqttData.commandTopic;
 }
 
+
 const String getAvaibleTopic(){
   return mqttData.avaibleTopic;
 }
+
 
 const String getStateTopic(){
   return mqttData.stateTopic;
@@ -57,6 +63,7 @@ bool ToBool( String value){
   
   return false;
 }
+
 
 void mqttStart(){
   println("Starting MQTT"); 
@@ -97,6 +104,7 @@ void onConnectionEstablished() {
   });
 }
 
+
 void publishRelay() {
   if (!mqttClient.isConnected()){
     return;
@@ -113,6 +121,7 @@ void publishRelay() {
   serializeJson(doc, buffer);
   mqttClient.publish(getStateTopic(), buffer, false);
 }
+
 
 void SendDiscoveryMessage( ){
   #ifdef DEBUG_MQTT
@@ -159,12 +168,14 @@ void SendDiscoveryMessage( ){
   mqttClient.publish(getDiscoveryTopic(), buffer, true);
 }
 
+
 void SendAvailableMessage(const String &mode = "online"){
   #ifdef DEBUG_MQTT
     println("MQTT publish available message");
   #endif
   mqttClient.publish(getAvaibleTopic(), mode, false);
 }
+
 
 void mqttPublish() {
   if (mqttClient.isConnected() && MessageTimer.tick()) {

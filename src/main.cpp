@@ -23,11 +23,11 @@ GyverDBFile db(&LittleFS, "/data.db");
 
 #include <wifi_func.h>
 
+
 #define LIGHT_THEME 0
 #define DARK_THEME 1
 #define RELAY_PIN 0
 #define TIMER_COUNT 5
-
 
 
 struct Timer
@@ -44,46 +44,41 @@ struct Time{
 };
 
 enum keys : size_t {
-    deviceName = SH("deviceName"),
-    
-    relayInvertMode = SH("relayInvertMode"),
-    saveRelayStatus = SH("saveRelayStatus"),
-    relayState      = SH("relayState"),
-    timezone        = SH("timezone"),
+  deviceName = SH("deviceName"),
+  
+  relayInvertMode = SH("relayInvertMode"),
+  saveRelayStatus = SH("saveRelayStatus"),
+  relayState      = SH("relayState"),
+  timezone        = SH("timezone"),
 
-    theme = SH("theme"),
-    timer = SH("timer"),
+  theme = SH("theme"),
+  timer = SH("timer"),
 };
-
 
 enum mqtt : size_t {
-    serverIp = SH("mqttServerIp"),
-    serverPort = SH("mqttServerPort"),
-    
-    username = SH("mqttUsername"),
-    password1 = SH("mqttPassword"),
+  serverIp = SH("mqttServerIp"),
+  serverPort = SH("mqttServerPort"),
+  
+  username = SH("mqttUsername"),
+  password1 = SH("mqttPassword"),
 
-    status_delay = SH("status_delay"),
-    avaible_delay = SH("avaible_delay"),
+  status_delay = SH("status_delay"),
+  avaible_delay = SH("avaible_delay"),
 
-    topicPrefix = SH("topicPrefix"),
-   /* discoveryTopic = SH("discoveryTopic"),
-    commandTopic = SH("commandTopic"),
-    avaibleTopic = SH("avaibleTopic"),
-    stateTopic = SH("stateTopic"),*/
+  topicPrefix = SH("topicPrefix"),
 };
-
 
 struct Data {
   //Data
   Time time;  
 };
 
-#define WIFIAPTIMER 180000
+
 Data data;
 GyverPortal portal;
 GPlog glog("log");
 WiFiEventHandler onSoftAPModeStationConnected, onSoftAPModeStationDisconnected, onStationModeConnected;
+
 
 struct Form{
   const char* root = "/";
@@ -97,11 +92,12 @@ struct Form{
   const char* firmwareUpgrade = "/ota_update";
 };
 
+
 Form form;
 TimerMs MessageTimer, ServiceMessageTimer, handleTimerDelay;
 EspMQTTClient mqttClient;
 ESPRelay Relay1;
-//bool resetAllow;
+
 
 // Определение NTP-клиента для получения времени
 WiFiUDP ntpUDP;
@@ -124,9 +120,12 @@ void print(const String& text);
 #include <function.h>
 #include <mqtt.h>
 
+
+
 void setup() {
   startup();
 }
+
 
 void loop(){
   ArduinoOTA.handle();
