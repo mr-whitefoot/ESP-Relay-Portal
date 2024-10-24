@@ -179,15 +179,6 @@ void portalBuild(){
       GP.BLOCK_TAB_BEGIN("MQTT topics");
         GP.LABEL("Topic prefix"); GP.BREAK();
         GP.TEXT("topicPrefix", "Topic prefix", db[mqtt::topicPrefix]); GP.BREAK();
-
-        /*GP.LABEL("Discovery topic"); GP.BREAK();
-        GP.TEXT("discoveryTopic", "Discovery topic", db[mqtt::discoveryTopic]); GP.BREAK();
-        GP.LABEL("Command topic"); GP.BREAK();
-        GP.TEXT("commandTopic", "Command topic", db[mqtt::commandTopic]); GP.BREAK();
-        GP.LABEL("Avaible topic"); GP.BREAK();
-        GP.TEXT("avaibleTopic", "Avaible topic", db[mqtt::avaibleTopic]); GP.BREAK();
-        GP.LABEL("State topic"); GP.BREAK();
-        GP.TEXT("stateTopic", "State topic", db[mqtt::stateTopic]); GP.BREAK();*/
       GP.BLOCK_END();
 
       GP.HR();
@@ -203,7 +194,6 @@ void portalBuild(){
       GP.HR();
       GP.BOX_BEGIN(GP_EDGES);
         GP.LABEL("I'm really understand what I do");
-        //GP.CHECK("resetAllow", resetAllow);  GP.BREAK();
         GP.CHECK("resetAllow");  GP.BREAK();
       GP.BOX_END();
 
