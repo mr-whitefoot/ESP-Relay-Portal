@@ -127,19 +127,15 @@ void handleFinish(){
   if (failed || !received){
     if (!failed) fail(F("no firmware file in request"));
     portal.server.send(200, F("text/html"),
-      String(F("<meta charset='utf-8'><body style='background:#1b1b1b;color:#eee;"
-               "font-family:sans-serif;text-align:center;padding-top:3em'>"
-               "<h3>Update error</h3><p>")) + failure +
-             F("</p><a style='color:#8cf' href='/ota_update'>Back</a>"));
+      String(F("<meta charset=utf-8><h3>Update error</h3><p>")) + failure +
+             F("</p><a href=/ota_update>Back</a>"));
     return;
   }
 
   // Успех: перезагрузка через общий заказ, а не здесь. Ответ уходит внутри
   // текущего прохода, а перезагрузка случится из loop() секундой позже.
   portal.server.send(200, F("text/html"),
-    F("<meta charset='utf-8'><meta http-equiv='refresh' content='25; url=/'>"
-      "<body style='background:#1b1b1b;color:#eee;font-family:sans-serif;"
-      "text-align:center;padding-top:3em'>"
+    F("<meta charset=utf-8><meta http-equiv=refresh content='25;url=/'>"
       "<h3>Update success</h3><p>Rebooting...</p>"));
   restartRequest("firmware updated");
 }
