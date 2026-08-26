@@ -79,6 +79,40 @@ void test_survives_millis_overflow(void) {
   TEST_ASSERT_TRUE(rr.tick(after));
 }
 
+// Обычная перезагрузка не зависит от MQTT: прежнее поведение с публикацией
+// offline должно сохраниться даже при незавершённом транспорте.
+void test_normal_restart_does_not_wait_for_mqtt(void) {
+  rr.request(0);
+
+  TEST_ASSERT_FALSE(rr.waitsForMqtt());
+  TEST_ASSERT_TRUE(rr.publishesOffline());
+  TEST_ASSERT_TRUE(rr.tick(RESTART_DELAY_MS, false));
+}
+
+// Factory reset не может оборвать очередь очистки: иначе брокер либо не увидит
+// tombstone, либо вернёт availability через Last Will.
+void test_factory_reset_waits_for_mqtt_disconnect(void) {
+  rr.request(0, RestartMode::FactoryReset);
+
+  TEST_ASSERT_TRUE(rr.waitsForMqtt());
+  TEST_ASSERT_FALSE(rr.publishesOffline());
+  TEST_ASSERT_FALSE(rr.tick(RESTART_DELAY_MS, false));
+  TEST_ASSERT_TRUE(rr.pending());
+  TEST_ASSERT_TRUE(rr.tick(RESTART_DELAY_MS + 1, true));
+}
+
+// Если reset подтвердили в коротком окне уже заказанного reboot, первая просьба
+// сохраняет срок, но не имеет права вернуть удалённый availability.
+void test_factory_reset_upgrades_pending_normal_restart(void) {
+  rr.request(0);
+  rr.request(RESTART_DELAY_MS - 1, RestartMode::FactoryReset);
+
+  TEST_ASSERT_TRUE(rr.waitsForMqtt());
+  TEST_ASSERT_FALSE(rr.publishesOffline());
+  TEST_ASSERT_FALSE(rr.tick(RESTART_DELAY_MS, false));
+  TEST_ASSERT_TRUE(rr.tick(RESTART_DELAY_MS, true));
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_idle_never_fires);
@@ -89,5 +123,8 @@ int main(int argc, char** argv) {
   RUN_TEST(test_can_be_requested_again);
   RUN_TEST(test_pending_is_visible_until_it_fires);
   RUN_TEST(test_survives_millis_overflow);
+  RUN_TEST(test_normal_restart_does_not_wait_for_mqtt);
+  RUN_TEST(test_factory_reset_waits_for_mqtt_disconnect);
+  RUN_TEST(test_factory_reset_upgrades_pending_normal_restart);
   return UNITY_END();
 }

@@ -234,11 +234,15 @@ void factoryReset(){
   // у брокера навсегда -- вместе с сущностью в HomeAssistant, которая никогда
   // не оживёт.
   mqttClearRetained();
+  // DISCONNECT ставится после tombstone-публикаций. Перезагрузка дождётся
+  // onDisconnect: это одновременно гарантирует отправку очереди и запрещает
+  // брокеру вернуть availability через Last Will.
+  mqttClient.disconnectAfterQueue();
   settings::clear();
   // Тоже через заказ: сброс приходит из обработчика формы. Пока перезагрузка
   // ждёт своего срока, публикации в MQTT остановлены -- иначе очередное
   // периодическое сообщение вернуло бы брокеру только что снятый топик.
-  restartRequest("factory reset");
+  restartRequest("factory reset", RestartMode::FactoryReset);
 }
 
 
@@ -251,22 +255,25 @@ void factoryReset(){
 // пять разных поводов, и в логе они выглядели одинаково. После неё в
 // следующем баннере стоит reset=Software/Restart, и связка "почему заказали"
 // плюс "чем закончилось" читается через перезагрузку.
-void restartRequest(const char* reason){
+void restartRequest(const char* reason,
+                    RestartMode mode){
   LOG_I(boot, String(F("reboot requested reason=")) + reason);
-  restartPending.request(millis());
+  restartPending.request(millis(), mode);
 }
 
 
 // Наступил ли срок. Зовётся из loop(), то есть заведомо после того, как
 // portal.tick() отдал ответ браузеру.
 void restartTick(){
-  if (restartPending.tick(millis())) restart();
+  bool mqttReady = !restartPending.waitsForMqtt() ||
+                   mqttClient.disconnectAfterQueueComplete();
+  if (restartPending.tick(millis(), mqttReady)) restart();
 }
 
 
 void restart(){
   LOG_I(boot, F("rebooting"));
-  SendAvailableMessage("offline");
+  if (restartPending.publishesOffline()) SendAvailableMessage("offline");
   mqttClient.loop();
   portal.tick();
   settings::commit();

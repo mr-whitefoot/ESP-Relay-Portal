@@ -25,15 +25,26 @@
 // загрузки устройства.
 static const uint32_t RESTART_DELAY_MS = 1000;
 
+enum class RestartMode : uint8_t {
+  Normal,
+  FactoryReset,
+};
+
 class RestartRequest {
  public:
-  // Просьба перезагрузиться. Повторная ничего не меняет: срок задаёт первая.
-  // Иначе поток запросов (страница, которую пользователь переоткрывает, пока
-  // ждёт) отодвигал бы перезагрузку бесконечно.
-  void request(uint32_t now) {
-    if (_pending) return;
+  // Просьба перезагрузиться. Повторная не меняет срок: иначе поток запросов
+  // (страница, которую пользователь переоткрывает, пока ждёт) отодвигал бы
+  // перезагрузку бесконечно. Factory reset может только усилить уже заказанную
+  // обычную перезагрузку: настройки к этому моменту стёрты, публиковать offline
+  // и возвращать availability уже нельзя.
+  void request(uint32_t now, RestartMode mode = RestartMode::Normal) {
+    if (_pending) {
+      if (mode == RestartMode::FactoryReset) _mode = mode;
+      return;
+    }
     _pending = true;
     _since = now;
+    _mode = mode;
   }
 
   // Перезагрузка заказана и ещё не наступила. Нужно, чтобы не публиковать в
@@ -41,10 +52,22 @@ class RestartRequest {
   // вернуло бы брокеру топик, который только что сняли.
   bool pending() const { return _pending; }
 
+  // Factory reset снимает retained-топики и завершает MQTT-сессию штатным
+  // DISCONNECT. Перезагрузка до закрытия транспорта оборвала бы очередь и
+  // разрешила брокеру опубликовать Last Will поверх снятого availability.
+  bool waitsForMqtt() const { return _mode == RestartMode::FactoryReset; }
+
+  // Обычная перезагрузка оставляет сущность существовать и переводит её в
+  // offline. После factory reset availability уже снят и возвращать его нельзя.
+  bool publishesOffline() const { return _mode == RestartMode::Normal; }
+
   // Один раз возвращает true, когда срок наступил.
-  bool tick(uint32_t now) {
+  // mqttReady имеет значение только для factory reset: его срок -- не замена
+  // подтверждённому закрытию асинхронного транспорта.
+  bool tick(uint32_t now, bool mqttReady = true) {
     if (!_pending) return false;
     if (now - _since < RESTART_DELAY_MS) return false;
+    if (waitsForMqtt() && !mqttReady) return false;
     _pending = false;
     return true;
   }
@@ -52,4 +75,5 @@ class RestartRequest {
  private:
   bool _pending = false;
   uint32_t _since = 0;
+  RestartMode _mode = RestartMode::Normal;
 };

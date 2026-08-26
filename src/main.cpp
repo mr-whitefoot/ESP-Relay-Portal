@@ -9,6 +9,7 @@
 #include <mqtt_topics.h>
 #include <core_keys.h>
 #include <core_contract.h>
+#include <restart_request.h>
 
 
 //#define DEBUG_DB
@@ -58,7 +59,8 @@ void factoryReset();
 void mqttStart();
 void onConnectionEstablished();
 void restart();
-void restartRequest(const char* reason);
+void restartRequest(const char* reason,
+                    RestartMode mode = RestartMode::Normal);
 
 
 // Ядро сначала, устройство после: ядро зовёт device::*, объявленные в

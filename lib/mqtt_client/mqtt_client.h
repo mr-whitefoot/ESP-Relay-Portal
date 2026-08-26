@@ -29,6 +29,7 @@ class CoreMqttClient {
     _client.onDisconnect([this](AsyncMqttClientDisconnectReason reason) {
       _disconnectReason = reason;
       _disconnectedPending = true;
+      _disconnectAfterQueuePending = false;
     });
     _client.onMessage(
         [this](char* topic, char* payload,
@@ -66,6 +67,25 @@ class CoreMqttClient {
                bool retain = false) {
     if (!isConnected()) return false;
     return _client.publish(topic.c_str(), 0, retain, payload.c_str()) != 0;
+  }
+
+  // Ставит MQTT DISCONNECT в хвост уже набранной очереди. AsyncMqttClient
+  // отправляет пакеты строго по порядку, а ESPAsyncTCP закрывает соединение
+  // штатно после буфера TCP: брокер сначала увидит retained-tombstone, затем
+  // DISCONNECT и потому не опубликует Last Will.
+  void disconnectAfterQueue() {
+    if (!_client.connected()) {
+      _disconnectAfterQueuePending = false;
+      return;
+    }
+    _disconnectAfterQueuePending = true;
+    _client.disconnect();
+  }
+
+  // connected() становится false уже в состоянии DISCONNECTING, поэтому для
+  // factory reset нужен отдельный признак настоящего onDisconnect callback.
+  bool disconnectAfterQueueComplete() const {
+    return !_disconnectAfterQueuePending;
   }
 
   bool subscribe(const String& topic, MessageCallback callback,
@@ -237,6 +257,7 @@ class CoreMqttClient {
   bool _messageOverflow = false;
   bool _connectedPending = false;
   bool _disconnectedPending = false;
+  bool _disconnectAfterQueuePending = false;
   bool _insideLoop = false;
   AsyncMqttClientDisconnectReason _disconnectReason =
       AsyncMqttClientDisconnectReason::TCP_DISCONNECTED;
