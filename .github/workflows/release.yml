@@ -15,6 +15,24 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  # Фаза выката сжатого манифеста.
+  #
+  # Прошивки до 4.6.0 берут из манифеста file/size/md5 и отвергают всё, что не
+  # кончается на .bin. Скрипт страницы обновления лежит у них во флеше, и
+  # заменить его может только само обновление -- то есть релиз, который приносит
+  # в парк умеющий gz скрипт, обязан публиковать манифест ещё в старой форме.
+  # Иначе кнопка Install откажет ровно у тех устройств, которые этот релиз и
+  # должны получить, и его придётся развозить espota или файлом.
+  #
+  # Совместимость односторонняя: новый скрипт старую форму понимает (поля `raw`
+  # нет -- ставится несжатым), старая прошивка новую не понимает никогда.
+  #
+  # Фаза 1 (4.6.0): манифест старой формы, .bin.gz публикуется, но не
+  # используется. Фаза 2: переключить на 'true' в первом релизе после того, как
+  # 4.6.0 разошлась по парку, -- с него всё встаёт сжатым.
+  COMPRESSED_MANIFEST: 'false'
+
 jobs:
   release:
     name: Собрать и опубликовать прошивки
@@ -107,27 +125,39 @@ jobs:
       # сверки и для сквозной проверки на устройстве: страница передаёт его в
       # `?md5=`, и Update сверяет принятые байты.
       #
-      # Основная запись образа -- сжатая: file/size/md5 описывают .bin.gz, то
-      # есть ровно то, что передаётся и стейджится. Несжатый идёт полями raw*.
-      # Так странице обновления дешевле по флешу: она читает те же три поля,
-      # что и раньше, и добавляет одно (raw) для второй границы безопасности.
+      # Форму записи образа выбирает COMPRESSED_MANIFEST (см. env в начале файла).
+      # В сжатой форме file/size/md5 описывают .bin.gz -- ровно то, что
+      # передаётся и стейджится, -- а несжатый идёт полями raw*. Так странице
+      # обновления дешевле по флешу: она читает те же три поля, что и раньше, и
+      # добавляет одно (raw) для второй границы безопасности.
       - name: Собрать manifest.json
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib
           version = os.environ["version"]
+          compressed = os.environ["COMPRESSED_MANIFEST"] == "true"
           suffix = "_v%s.bin" % version
           images = {}
           for path in sorted(pathlib.Path("dist").glob("*.bin")):
               packed = path.with_name(path.name + ".gz")
-              images[path.name[len("ESP_"):-len(suffix)]] = {
-                  "file": packed.name,
-                  "size": packed.stat().st_size,
-                  "md5": hashlib.md5(packed.read_bytes()).hexdigest(),
-                  "raw": path.stat().st_size,
-                  "raw_file": path.name,
-                  "raw_md5": hashlib.md5(path.read_bytes()).hexdigest(),
+              raw = {
+                  "file": path.name,
+                  "size": path.stat().st_size,
+                  "md5": hashlib.md5(path.read_bytes()).hexdigest(),
               }
+              if compressed:
+                  entry = {
+                      "file": packed.name,
+                      "size": packed.stat().st_size,
+                      "md5": hashlib.md5(packed.read_bytes()).hexdigest(),
+                      "raw": raw["size"],
+                      "raw_file": raw["file"],
+                      "raw_md5": raw["md5"],
+                  }
+              else:
+                  entry = raw
+              images[path.name[len("ESP_"):-len(suffix)]] = entry
+          print("manifest: %s" % ("сжатый" if compressed else "несжатый, фаза 1"))
           manifest = {"version": version, "images": images}
           pathlib.Path("dist/manifest.json").write_text(
               json.dumps(manifest, indent=1) + "\n")
@@ -136,18 +166,20 @@ jobs:
           # Зеркало заняло адрес, по которому раньше публиковался README, и без
           # index.html корень сайта отдавал бы 404. Страница заодно объясняет,
           # что это за файлы и что руками их качать не нужно.
+          # Оба файла в списке независимо от формы манифеста: .gz лежит на
+          # зеркале и в фазе 1, просто ещё никем не запрашивается.
           rows = "\n".join(
-              '<li><a href="{g}">{g}</a> — {gs} B '
-              '(<a href="{f}">{f}</a>, {s} B)</li>'.format(
-                  g=i["file"], gs=i["size"], f=i["raw_file"], s=i["raw"])
+              '<li><a href="{f}">{f}</a> — {s} B '
+              '(<a href="{f}.gz">{f}.gz</a>)</li>'.format(
+                  f=i.get("raw_file", i["file"]), s=i.get("raw", i["size"]))
               for i in images.values())
           pathlib.Path("dist/index.html").write_text(
               '<!doctype html><meta charset="utf-8">'
               "<title>ESP-Device-Portal {v}</title>"
               "<h1>ESP-Device-Portal {v}</h1>"
               "<p>Зеркало прошивок для страницы обновления в портале устройства. "
-              "Портал ставит сжатый <code>.bin.gz</code>; несжатый рядом — для "
-              "ручной заливки файлом. "
+              "Руками заливается только несжатый <code>.bin</code>; "
+              "<code>.bin.gz</code> ставит страница обновления сама. "
               'Обычный путь — кнопка <b>Install</b> на странице Firmware upgrade; '
               'описание в <a href="https://github.com/mr-whitefoot/ESP-Device-Portal"'
               ">репозитории</a>.</p>"
