@@ -60,10 +60,14 @@ jobs:
       - name: Собрать прошивки
         run: pio run -e esp01_relay -e d1_mini_relay -e esp07s_relay8 -e esp01_ds18b20 -e d1_mini_ds18b20 2>&1 | tee build.log
 
+      # Вместе с .bin забираем .bin.gz: сжатые образы делает сама сборка
+      # (extra_script_ota.py), а не отдельный шаг здесь -- тогда локальный
+      # `pio run` даёт ровно те же файлы, что и релиз. По воздуху через портал
+      # уходит именно .gz, несжатый остаётся путём ручной заливки и отката.
       - name: Сложить бинарники
         run: |
           mkdir dist
-          cp .pio/build/esp01_relay/*.bin .pio/build/d1_mini_relay/*.bin .pio/build/esp07s_relay8/*.bin .pio/build/esp01_ds18b20/*.bin .pio/build/d1_mini_ds18b20/*.bin dist/
+          cp .pio/build/{esp01_relay,d1_mini_relay,esp07s_relay8,esp01_ds18b20,d1_mini_ds18b20}/*.bin .pio/build/{esp01_relay,d1_mini_relay,esp07s_relay8,esp01_ds18b20,d1_mini_ds18b20}/*.bin.gz dist/
           ls -l dist
 
       # Запас по OTA -- в тело релиза: по нему видно, сколько места осталось
@@ -76,7 +80,7 @@ jobs:
             echo "Файлы собраны из тега \`$GITHUB_REF_NAME\`."
             echo
             echo '```'
-            grep 'OTA headroom' build.log || echo "строка OTA headroom не найдена"
+            grep -E 'OTA headroom|^gzip:' build.log || echo "строка OTA headroom не найдена"
             echo '```'
           } > notes.md
 
@@ -84,7 +88,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.bin \
+          gh release create "$GITHUB_REF_NAME" dist/*.bin dist/*.bin.gz \
             --title "ESP-Device-Portal $version" \
             --notes-file notes.md \
             --generate-notes
@@ -100,7 +104,13 @@ jobs:
       # Ключ images -- это custom_device_name окружения; прошивка знает своё имя
       # из -D IMAGE_NAME и по нему находит свой файл. md5 браузером не
       # проверяется (на странице по http нет crypto.subtle), он для ручной
-      # сверки и локальных утилит.
+      # сверки и для сквозной проверки на устройстве: страница передаёт его в
+      # `?md5=`, и Update сверяет принятые байты.
+      #
+      # Основная запись образа -- сжатая: file/size/md5 описывают .bin.gz, то
+      # есть ровно то, что передаётся и стейджится. Несжатый идёт полями raw*.
+      # Так странице обновления дешевле по флешу: она читает те же три поля,
+      # что и раньше, и добавляет одно (raw) для второй границы безопасности.
       - name: Собрать manifest.json
         run: |
           python3 - <<'PY'
@@ -109,10 +119,14 @@ jobs:
           suffix = "_v%s.bin" % version
           images = {}
           for path in sorted(pathlib.Path("dist").glob("*.bin")):
+              packed = path.with_name(path.name + ".gz")
               images[path.name[len("ESP_"):-len(suffix)]] = {
-                  "file": path.name,
-                  "size": path.stat().st_size,
-                  "md5": hashlib.md5(path.read_bytes()).hexdigest(),
+                  "file": packed.name,
+                  "size": packed.stat().st_size,
+                  "md5": hashlib.md5(packed.read_bytes()).hexdigest(),
+                  "raw": path.stat().st_size,
+                  "raw_file": path.name,
+                  "raw_md5": hashlib.md5(path.read_bytes()).hexdigest(),
               }
           manifest = {"version": version, "images": images}
           pathlib.Path("dist/manifest.json").write_text(
@@ -123,13 +137,17 @@ jobs:
           # index.html корень сайта отдавал бы 404. Страница заодно объясняет,
           # что это за файлы и что руками их качать не нужно.
           rows = "\n".join(
-              '<li><a href="{f}">{f}</a> — {s} B</li>'.format(f=i["file"], s=i["size"])
+              '<li><a href="{g}">{g}</a> — {gs} B '
+              '(<a href="{f}">{f}</a>, {s} B)</li>'.format(
+                  g=i["file"], gs=i["size"], f=i["raw_file"], s=i["raw"])
               for i in images.values())
           pathlib.Path("dist/index.html").write_text(
               '<!doctype html><meta charset="utf-8">'
               "<title>ESP-Device-Portal {v}</title>"
               "<h1>ESP-Device-Portal {v}</h1>"
               "<p>Зеркало прошивок для страницы обновления в портале устройства. "
+              "Портал ставит сжатый <code>.bin.gz</code>; несжатый рядом — для "
+              "ручной заливки файлом. "
               'Обычный путь — кнопка <b>Install</b> на странице Firmware upgrade; '
               'описание в <a href="https://github.com/mr-whitefoot/ESP-Device-Portal"'
               ">репозитории</a>.</p>"

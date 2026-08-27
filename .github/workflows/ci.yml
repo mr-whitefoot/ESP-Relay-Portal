@@ -83,16 +83,21 @@ jobs:
         if: always()
         run: |
           headroom=$(grep -m1 'OTA headroom' build.log || true)
+          packed=$(grep -m1 '^gzip:' build.log || true)
           echo "### ${{ matrix.environment }}" >> "$GITHUB_STEP_SUMMARY"
           echo "\`${headroom:-нет строки OTA headroom}\`" >> "$GITHUB_STEP_SUMMARY"
+          [ -n "$packed" ] && echo "\`$packed\`" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.environment }}
           # Имя bin-файла задаёт extra_script.py: ESP_<устройство>_v<версия>.bin.
-          # Рядом кладётся elf -- по нему разбирается стектрейс с железа.
+          # Рядом кладётся .bin.gz -- им проверяется сжатая заливка через портал
+          # на неопубликованной сборке, -- и elf, по которому разбирается
+          # стектрейс с железа.
           path: |
             .pio/build/${{ matrix.environment }}/*.bin
+            .pio/build/${{ matrix.environment }}/*.bin.gz
             .pio/build/${{ matrix.environment }}/*.elf
           if-no-files-found: error
           retention-days: 30
