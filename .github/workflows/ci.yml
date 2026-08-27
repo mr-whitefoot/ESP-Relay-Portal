@@ -34,6 +34,18 @@ jobs:
       - name: pio test -e native
         run: pio test -e native
 
+  script:
+    name: Стенд страницы обновления
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # web/fw.js отдаётся зеркалом, а не устройством, поэтому его не касаются
+      # ни компилятор, ни проверка размера образа. Между кнопкой Install и
+      # записью во флеш не остаётся ничего, кроме этого скрипта.
+      - name: node test/web/fw_test.js
+        run: node test/web/fw_test.js
+
   build:
     name: Сборка ${{ matrix.environment }}
     runs-on: ubuntu-latest

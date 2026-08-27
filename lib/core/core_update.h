@@ -22,57 +22,23 @@
 //
 // Поэтому в манифесте основная запись образа -- сжатая: `file`, `size` и `md5`
 // описывают `.bin.gz`, то есть ровно то, что передаётся и стейджится, а
-// несжатый образ проходит полями `raw`, `raw_file`, `raw_md5`. Скрипту от этого
-// дешевле: он читает те же три поля, что и раньше, и добавляет одно.
+// несжатый образ проходит полями `raw`, `raw_file`, `raw_md5`.
+//
+// Сам скрипт страницы (web/fw.js) лежит на зеркале, а не в PROGMEM. До 4.7.0 он
+// отдавался маршрутом /fw.js и стоил 1881 байт флеша -- на ESP-07S это был весь
+// оставшийся запас до предела OTA. Важнее экономии оказалось следствие: форма
+// манифеста больше не заморожена в каждой выпущенной прошивке, и страницу
+// обновления можно менять, не перепрошивая парк.
+//
+// Цена -- зеркало получает право исполнять код в контексте портала. Расширение
+// доверия невелико: оно и так решает, какие байты прошивки сюда приедут, и md5
+// в манифесте лежит рядом с образом, то есть от подмены на самом зеркале не
+// защищает. Отсюда же граница: адрес зеркала прошит в тег script и приходит с
+// устройства, а не из настроек, -- сменить его тем, кто открыл портал, нельзя.
+
+#define FW_BASE "https://mr-whitefoot.github.io/ESP-Device-Portal/"
 
 namespace coreupdate {
-
-// Скрипт отдаётся отдельным маршрутом, а не вставляется в страницы: он нужен
-// двум страницам, а во флеше должен лежать ровно один раз. Заодно браузер
-// кеширует его сам -- sendFile_P проставляет Cache-Control.
-static const char SCRIPT[] PROGMEM = R"JS((function(){
-if(!window.FW)return;
-var B='https://mr-whitefoot.github.io/ESP-Device-Portal/';
-var S=document.getElementById('fwStatus'),N=document.getElementById('fwNew');
-var G=document.getElementById('fwGo'),m;
-function s(t,n){if(S)S.textContent=t;if(n&&N)N.textContent=t;}
-function get(u,ok,bad,bl){
-var x=new XMLHttpRequest();x.open('GET',u);
-if(bl){x.responseType='blob';
-x.onprogress=function(e){s('Downloading '+((100*e.loaded/(e.total||1))|0)+'%');};}
-x.onload=function(){x.status==200?ok(x):bad();};x.onerror=bad;x.send();}
-function cmp(a,b){a=a.split('.');b=b.split('.');
-for(var i=0;i<3;i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d;}return 0;}
-get(B+'manifest.json',function(x){
-m=JSON.parse(x.responseText);
-if(cmp(m.version,FW.v)<=0){s('Up to date');return;}
-s('New version '+m.version+' available',1);
-if(G)G.style.display='';
-},function(){s('GitHub unreachable');});
-window.fwInstall=function(){
-var f=m.images[FW.i];
-if(!f){s('No image for '+FW.i);return;}
-var n=(f.size+4095)&-4096;
-if(n>FW.f||f.raw>FW.e-n){s('No room: '+n+'+'+f.raw);return;}
-if(G)G.style.display='none';
-get(B+f.file,function(x){
-var d=new FormData();d.append('firmware',x.response,f.file);
-var u=new XMLHttpRequest();
-u.open('POST','/ota_update?size='+f.size+'&md5='+f.md5);
-u.upload.onprogress=function(e){s('Flashing '+((100*e.loaded/e.total)|0)+'%');};
-u.onload=function(){s('Done, rebooting');setTimeout(function(){location.href='/';},20000);};
-u.onerror=function(){s('Upload failed');};
-u.send(d);
-},function(){s('Download failed');},1);};
-})())JS";
-
-
-void routes(){
-  portal.server.on(F("/fw.js"), HTTP_GET, [](){
-    portal.sendFile_P(SCRIPT, "application/javascript");
-  });
-}
-
 
 // Что устройство рассказывает о себе скрипту: своя версия, имя своего образа в
 // релизе и две величины, по которым скрипт считает обе границы безопасности.
@@ -107,7 +73,12 @@ void facts(){
   GP.SEND(String(ESP.getFreeSketchSpace()));
   GP.SEND(F(",e:"));
   GP.SEND(String((uint32_t)&_FS_start - 0x40200000));
-  GP.SEND(F("}</script><script src='/fw.js'></script>"));
+  // onerror -- единственная новость, которую страница может сообщить сама:
+  // без интернета скрипта нет, и строка состояния иначе навсегда осталась бы
+  // на "Checking...".
+  GP.SEND(F("}</script><script src='" FW_BASE "fw.js' onerror=\""
+            "var e=document.getElementById('fwStatus');"
+            "if(e)e.textContent='Offline'\"></script>"));
 }
 
 
@@ -122,11 +93,19 @@ void hint(){
 
 // Блок на странице обновления. Здесь, в отличие от главной, скрипт отчитывается
 // о любом исходе: сюда приходят именно за ответом на вопрос "а что с версией".
+//
+// Выбор версии и текст "что нового" наполняет скрипт из манифеста; пустой
+// select и пустой pre до этого момента спрятаны, чтобы страница без интернета
+// не показывала органы управления, которыми нечего заполнить.
 void block(){
   GP.BLOCK_TAB_BEGIN("Update from GitHub");
     GP.SEND(F("<div id='fwStatus'>Checking...</div><br>"
+              "<select id='fwVer' style='display:none'></select> "
               "<button type='button' id='fwGo' style='display:none' "
-              "onclick='fwInstall()'>Install</button>"));
+              "onclick='fwInstall()'>Install</button>"
+              // pre-wrap, потому что заметки приходят из CHANGELOG со своими
+              // переносами, а ширина портала на телефоне вдвое меньше строки.
+              "<pre id='fwWhat' style='white-space:pre-wrap'></pre>"));
   GP.BLOCK_END();
   facts();
 }

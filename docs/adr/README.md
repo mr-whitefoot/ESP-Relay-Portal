@@ -14,3 +14,4 @@
 - [0012 — Обновление с GitHub выполняет страница портала](0012-portal-github-update.md)
 - [0013 — Приём образа по HTTP делает прошивка, а не CustomOTA](0013-own-firmware-upload-handler.md)
 - [0014 — По воздуху через портал заливается сжатый образ](0014-compressed-ota-images.md)
+- [0015 — Страница обновления знает историю релизов, а её скрипт живёт на зеркале](0015-release-history-on-update-page.md)

@@ -33,6 +33,13 @@ env:
   # 4.6.0 разошлась по парку, -- с него всё встаёт сжатым.
   COMPRESSED_MANIFEST: 'false'
 
+  # Сколько релизов держать на зеркале, считая текущий. Их версии попадают в
+  # выбор на странице обновления, поэтому глубина -- это ровно то, насколько
+  # далеко можно откатиться кнопкой. Каждый релиз стоит около 3,3 МБ на Pages.
+  # Пять шагов покрывают всю линию, где приём образа уже умеет то же, что и
+  # сейчас; дальше назад откат всё равно потребовал бы UART.
+  MIRROR_RELEASES: '5'
+
 jobs:
   release:
     name: Собрать и опубликовать прошивки
@@ -72,6 +79,12 @@ jobs:
           fi
           echo "version=$tag_version" >> "$GITHUB_ENV"
 
+      # Секция CHANGELOG нужна и телу релиза, и полю notes в манифесте, откуда
+      # её читает страница обновления устройства. Забыть её так же легко, как
+      # release_version, и так же дёшево поймать здесь -- до сборки.
+      - name: Проверить секцию CHANGELOG
+        run: python3 tools/changelog.py "$version" > changelog.txt
+
       # Только конечные образы, а не диагностическая сборка esp01_relay_metrics:
       # в релизе лежит то, что можно заливать на железо, и метрики loop() в
       # serial туда не относятся. При необходимости она собирается из CI.
@@ -93,6 +106,10 @@ jobs:
       - name: Подготовить заметки
         run: |
           {
+            echo "## Что нового"
+            echo
+            cat changelog.txt
+            echo
             echo "## Прошивки"
             echo
             echo "Файлы собраны из тега \`$GITHUB_REF_NAME\`."
@@ -111,6 +128,46 @@ jobs:
             --notes-file notes.md \
             --generate-notes
 
+      # Прошлые релизы на зеркало. Артефакт Pages собирается заново каждый раз и
+      # заменяет сайт целиком, поэтому история не накапливается сама -- её нужно
+      # принести с собой. Ассеты качаются здесь, на сервере: у
+      # release-assets.githubusercontent.com нет Access-Control-Allow-Origin, и
+      # из браузера они недостижимы по той же причине, по которой существует
+      # само зеркало.
+      #
+      # Берётся только .bin: сжатую форму делаем сами и одинаково для всех
+      # версий. У релизов до 4.6.0 .bin.gz в ассетах нет вовсе, а без него
+      # откат на них с крупного образа был бы невозможен -- несжатая заливка
+      # требует свободного места под весь образ целиком.
+      - name: Принести прошлые релизы
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          keep=$((MIRROR_RELEASES - 1))
+          older=$(gh release list --limit 40 --json tagName -q '.[].tagName' \
+            | grep '^version_' | sed 's/^version_//' \
+            | sort -V -r | grep -v "^$version\$" | head -n "$keep" || true)
+          for old in $older; do
+            echo "::group::$old"
+            gh release download "version_$old" -D dist -p '*.bin' || \
+              echo "у version_$old нет .bin-ассетов, пропущено"
+            echo '::endgroup::'
+          done
+          python3 - <<'PY'
+          import gzip, pathlib
+          for path in sorted(pathlib.Path("dist").glob("*.bin")):
+              packed = path.with_name(path.name + ".gz")
+              if packed.exists():
+                  continue
+              with open(packed, "wb") as out:
+                  with gzip.GzipFile(fileobj=out, mode="wb",
+                                     compresslevel=9, mtime=0) as gz:
+                      gz.write(path.read_bytes())
+              print("сжат %s: %d -> %d" % (path.name, path.stat().st_size,
+                                           packed.stat().st_size))
+          PY
+          ls -l dist
+
       # Зеркало для страницы обновления в портале. Ассеты релиза для неё не
       # годятся: release-assets.githubusercontent.com отдаёт файл без заголовка
       # Access-Control-Allow-Origin, и fetch со страницы устройства туда
@@ -127,52 +184,97 @@ jobs:
       #
       # Форму записи образа выбирает COMPRESSED_MANIFEST (см. env в начале файла).
       # В сжатой форме file/size/md5 описывают .bin.gz -- ровно то, что
-      # передаётся и стейджится, -- а несжатый идёт полями raw*. Так странице
-      # обновления дешевле по флешу: она читает те же три поля, что и раньше, и
-      # добавляет одно (raw) для второй границы безопасности.
+      # передаётся и стейджится, -- а несжатый идёт полями raw*.
+      #
+      # history перечисляет релизы, лежащие на зеркале, свежий первым: версия,
+      # текст "что нового" из CHANGELOG и свой набор образов. Из него страница
+      # обновления делает выбор версии.
+      #
+      # Верхние version/images дублируют первую запись history и остаются ради
+      # прошивок 4.3.1--4.6.0: их скрипт вшит во флеш, про history не знает и
+      # читает именно эти поля. Убрать их можно будет только тогда, когда таких
+      # устройств не останется.
       - name: Собрать manifest.json
         run: |
+          cp web/fw.js dist/
           python3 - <<'PY'
-          import hashlib, json, os, pathlib
+          import hashlib, json, os, pathlib, re, subprocess
           version = os.environ["version"]
           compressed = os.environ["COMPRESSED_MANIFEST"] == "true"
-          suffix = "_v%s.bin" % version
-          images = {}
-          for path in sorted(pathlib.Path("dist").glob("*.bin")):
+          dist = pathlib.Path("dist")
+
+          def entry(path):
               packed = path.with_name(path.name + ".gz")
               raw = {
                   "file": path.name,
                   "size": path.stat().st_size,
                   "md5": hashlib.md5(path.read_bytes()).hexdigest(),
               }
-              if compressed:
-                  entry = {
-                      "file": packed.name,
-                      "size": packed.stat().st_size,
-                      "md5": hashlib.md5(packed.read_bytes()).hexdigest(),
-                      "raw": raw["size"],
-                      "raw_file": raw["file"],
-                      "raw_md5": raw["md5"],
-                  }
-              else:
-                  entry = raw
-              images[path.name[len("ESP_"):-len(suffix)]] = entry
-          print("manifest: %s" % ("сжатый" if compressed else "несжатый, фаза 1"))
-          manifest = {"version": version, "images": images}
+              if not compressed:
+                  return raw
+              return {
+                  "file": packed.name,
+                  "size": packed.stat().st_size,
+                  "md5": hashlib.md5(packed.read_bytes()).hexdigest(),
+                  "raw": raw["size"],
+                  "raw_file": raw["file"],
+                  "raw_md5": raw["md5"],
+              }
+
+          # Ключ images -- это custom_device_name окружения; прошивка знает своё
+          # имя из -D IMAGE_NAME и по нему находит свой файл. md5 браузером не
+          # проверяется (на странице по http нет crypto.subtle), он для ручной
+          # сверки и для сквозной проверки на устройстве: страница передаёт его
+          # в `?md5=`, и Update сверяет принятые байты.
+          def images(release):
+              suffix = "_v%s.bin" % release
+              return {path.name[len("ESP_"):-len(suffix)]: entry(path)
+                      for path in sorted(dist.glob("ESP_*" + suffix))}
+
+          # Набор версий берётся из имён файлов, а не из списка тегов: на
+          # зеркало попадает ровно то, что скачалось, и манифест не должен
+          # обещать релиз, чьи ассеты не приехали.
+          found = set()
+          for path in dist.glob("ESP_*.bin"):
+              match = re.search(r"_v(\d+\.\d+\.\d+)\.bin$", path.name)
+              if match:
+                  found.add(match.group(1))
+          order = sorted(found, key=lambda s: [int(x) for x in s.split(".")],
+                         reverse=True)
+
+          def notes(release):
+              done = subprocess.run(["python3", "tools/changelog.py", release],
+                                    capture_output=True, text=True)
+              return done.stdout.strip() if done.returncode == 0 else ""
+
+          history = [{"version": release, "notes": notes(release),
+                      "images": images(release)} for release in order]
+          if history[0]["version"] != version:
+              raise SystemExit("свежий релиз на зеркале -- %s, а собираем %s"
+                               % (history[0]["version"], version))
+
+          print("manifest: %s, релизов %d"
+                % ("сжатый" if compressed else "несжатый, фаза 1", len(history)))
+          manifest = {"version": version, "images": history[0]["images"],
+                      "history": history}
           pathlib.Path("dist/manifest.json").write_text(
-              json.dumps(manifest, indent=1) + "\n")
-          print(json.dumps(manifest, indent=1))
+              json.dumps(manifest, indent=1, ensure_ascii=False) + "\n")
+          print(json.dumps(manifest, indent=1, ensure_ascii=False))
 
           # Зеркало заняло адрес, по которому раньше публиковался README, и без
           # index.html корень сайта отдавал бы 404. Страница заодно объясняет,
           # что это за файлы и что руками их качать не нужно.
           # Оба файла в списке независимо от формы манифеста: .gz лежит на
           # зеркале и в фазе 1, просто ещё никем не запрашивается.
-          rows = "\n".join(
-              '<li><a href="{f}">{f}</a> — {s} B '
-              '(<a href="{f}.gz">{f}.gz</a>)</li>'.format(
-                  f=i.get("raw_file", i["file"]), s=i.get("raw", i["size"]))
-              for i in images.values())
+          groups = ""
+          for release in history:
+              rows = "\n".join(
+                  '<li><a href="{f}">{f}</a> — {s} B '
+                  '(<a href="{f}.gz">{f}.gz</a>)</li>'.format(
+                      f=i.get("raw_file", i["file"]), s=i.get("raw", i["size"]))
+                  for i in release["images"].values())
+              groups += "<h2>{v}</h2><ul>{rows}</ul>".format(
+                  v=release["version"], rows=rows)
           pathlib.Path("dist/index.html").write_text(
               '<!doctype html><meta charset="utf-8">'
               "<title>ESP-Device-Portal {v}</title>"
@@ -180,11 +282,14 @@ jobs:
               "<p>Зеркало прошивок для страницы обновления в портале устройства. "
               "Руками заливается только несжатый <code>.bin</code>; "
               "<code>.bin.gz</code> ставит страница обновления сама. "
-              'Обычный путь — кнопка <b>Install</b> на странице Firmware upgrade; '
-              'описание в <a href="https://github.com/mr-whitefoot/ESP-Device-Portal"'
-              ">репозитории</a>.</p>"
-              '<ul>{rows}</ul><p><a href="manifest.json">manifest.json</a></p>\n'
-              .format(v=version, rows=rows))
+              'Обычный путь — кнопка <b>Install</b> на странице Firmware upgrade, '
+              "там же выбирается версия; описание в "
+              '<a href="https://github.com/mr-whitefoot/ESP-Device-Portal">'
+              "репозитории</a>.</p>"
+              "{groups}"
+              '<p><a href="manifest.json">manifest.json</a> · '
+              '<a href="fw.js">fw.js</a></p>\n'
+              .format(v=version, groups=groups))
           PY
 
       # enablement переводит Pages репозитория на публикацию из Actions. Без
